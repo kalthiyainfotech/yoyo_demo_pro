@@ -48,7 +48,7 @@
                     <div class="drawer" id="drawer">
                         <ul class="drawer-data ">
                             <li id="new-chat-button">
-                                <a href="{% url "home" %}" class="items-center flex gap-5"> <span
+                                <a href="{% url "new_chat" %}" class="items-center flex gap-5"> <span
                                         class="material-symbols-outlined">edit_square</span>
                                     <span>New Chat</span>
                                 </a>
@@ -314,8 +314,7 @@
     </div>
 
 
-    <!------------------------------------------------->
-    <!-- Help Center -->
+
     <div id="help_Data"
         class="flex flex-col hidden  justify-start fixed top-[100px] rounded-2xl right-[10px] bg-[--bg-main] shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)]  lg:w-[23%] md:w-[40%] sm:w-[50%] w-[90%] h-[70vh] overflow-y-auto">
 
@@ -414,9 +413,7 @@
             help_Data.classList.add('hidden')
         );
     </script>
-    <!---------------------------------------------->
-    <!---------------------------------------------->
-    <!-- ************Feedback********* -->
+
 
     <div id="feedback-data"
         class="flex z-50 flex-col hidden justify-between fixed top-0 right-0 rounded-l-2xl bg-[#1F1F1F] shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] lg:w-[28%] md:w-[40%] sm:w-[50%] w-[90%] h-[100vh] overflow-hidden">
@@ -494,10 +491,98 @@
         `;
     </script>
 
+<script>
+    (function () {
+    const sendBtn = document.getElementById("send-button");
+    const input = document.getElementById("user-input"); // your textarea
+    const chatArea = document.getElementById("chat-history"); // where messages show
+
+    let currentChatId = {% if current_chat %}{{ current_chat.id }}{% else %}0{% endif %};
+    const sendUrlTemplate = "{% url 'send_message' 0 %}";
+
+    function getCsrfToken() {
+        const tokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (tokenInput && tokenInput.value) return tokenInput.value;
+        const match = document.cookie.match(/(^|;)\s*csrftoken=([^;]+)/);
+        return match ? decodeURIComponent(match[2]) : "";
+    }
+
+    function buildSendUrl(chatId) {
+        return sendUrlTemplate.replace(/0\/?$/, chatId + "/");
+    }
+
+    function escapeHtml(str) {
+        return String(str || "").replace(/[&<>"']/g, (m) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m])
+        );
+    }
+
+    async function sendMessage() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        // User bubble
+        const userBubble = document.createElement("div");
+        userBubble.className = "fade-in p-3 rounded-lg max-w-xl bg-indigo-600 text-white ml-auto";
+        userBubble.innerHTML = `${escapeHtml(text)}<div class="text-[10px] opacity-70 mt-1">just now</div>`;
+        chatArea.appendChild(userBubble);
+        chatArea.scrollTop = chatArea.scrollHeight;
+        input.value = "";
+
+        // Bot thinking bubble
+        const botBubble = document.createElement("div");
+        botBubble.className = "fade-in p-3 rounded-lg max-w-xl bg-gray-700 text-gray-200";
+        botBubble.innerHTML = "YOYO is thinking...";
+        chatArea.appendChild(botBubble);
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        try {
+        const url = buildSendUrl(currentChatId || 0);
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
+            },
+            body: JSON.stringify({ message: text }),
+        });
+
+        if (!res.ok) {
+            botBubble.innerHTML = `⚠️ Server error: ${res.status}`;
+            return;
+        }
+
+        const data = await res.json();
+        if (data.error) {
+            botBubble.innerHTML = `⚠️ ${escapeHtml(data.error)}`;
+        } else {
+            currentChatId = data.chat_id; // update for next message
+            botBubble.innerHTML = escapeHtml(data.bot_reply || "No reply");
+        }
+        } catch (err) {
+        botBubble.innerHTML = `⚠️ Network error: ${escapeHtml(err.message)}`;
+        }
+
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    // Optional: Press Enter to send (Shift+Enter = newline)
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+        }
+    });
+    })();
+</script>
 
 
 
     <script src="{% static "JS/Gemini.js" %}"></script>
+
+    
 
 </body>
 
