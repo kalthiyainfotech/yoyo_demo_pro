@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YOYO Sign Up</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-main: #FFFFFF;
+            --sidebar-bg: #f0f4f9;
+            --text-main: #1F1F1F;
+            --text-muted: #5F6368;
+            --input-bg: #FFFFFF;
+            --input-border-focus: #4285F4;
+            --textarea-text: #1f1f1f;
+            --add-btn: #1E64D4;
+            --add-btn-hover: #1054c2;
+            --add-btn-text: #fff;
+        }
+
+        body.dark {
+            --bg-main: #1B1C1D;
+            --sidebar-bg: #282a2c;
+            --text-main: #E8EAED;
+            --text-muted: #9AA0A6;
+            --input-bg: #1B1C1D;
+            --input-border-focus: #9BBBEF;
+            --textarea-text: #e3e3e3;
+            --add-btn: #A8C7FA;
+            --add-btn-hover: #97bdfa;
+            --add-btn-text: #062E6F;
+        }
+
+        .material-icons,
+        .material-symbols-outlined {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+</head>
+
+<body class="bg-[--bg-main]  dark min-h-screen flex items-center justify-center px-4">
+    <div class="bg-[--sidebar-bg] rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl sm:text-3xl font-bold text-center text-[--text-main] ">Sign Up to YOYO</h2>
+            <a href="Yoyo.html">
+                <span
+                    class="material-symbols-outlined text-xl sm:text-3xl font-bold text-center text-[--text-main] cursor-pointer">
+                    home
+                </span>
+            </a>
+        </div>
+
+        <form id="signInForm" class="space-y-5" method="post" action="{% url 'register' %}">
+
+            {% csrf_token %}
+            <!-- Name Field -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-[--textarea-text] mb-1">Name</label>
+                <input type="text" name="name" id="name" 
+                    class="w-full px-4 py-2 border text-[--textarea-text] bg-[--input-bg] rounded-lg focus:outline-none focus:ring-2 focus:ring-[--input-border-focus]" />
+                <p id="nameError" class="text-red-500 text-xs mt-1 hidden">Name is required.</p>
+            </div>
+
+            <!-- Email Field -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-[--textarea-text] mb-1">Email</label>
+                <input type="email" name="email" id="email" 
+                    class="w-full px-4 py-2 border text-[--textarea-text] bg-[--input-bg] rounded-lg focus:outline-none focus:ring-2 focus:ring-[--input-border-focus]" />
+                <p id="emailError" class="text-red-500 text-xs mt-1 hidden">Enter a valid email.</p>
+            </div>
+
+            <!-- Password Field -->
+            <div class="relative">
+                <label for="password" class="block text-sm font-medium text-[--textarea-text] mb-1">Password</label>
+                <input type="password" name="password" id="password" 
+                    class="w-full px-4 py-2 border text-[--textarea-text] bg-[--input-bg] rounded-lg focus:outline-none focus:ring-2 focus:ring-[--input-border-focus]" />
+                <span id="togglePassword"
+                    class="absolute right-3 material-symbols-outlined top-[38px] text-[--add-btn] cursor-pointer select-none">visibility</span>
+                <p id="passwordError" class="text-red-500 text-xs mt-1 hidden">Password must be at least 6 characters.
+                </p>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="relative">
+                <label for="confirmPassword" class="block text-sm font-medium text-[--textarea-text] mb-1">Confirm
+                    Password</label>
+                <input type="password" name="c_password" id="confirmPassword" 
+                    class="w-full px-4 py-2 border text-[--textarea-text] bg-[--input-bg] rounded-lg focus:outline-none focus:ring-2 focus:ring-[--input-border-focus]" />
+                <span id="toggleConfirmPassword"
+                    class="absolute right-3 material-symbols-outlined top-[38px] text-[--add-btn] cursor-pointer select-none">visibility</span>
+                <p id="confirmError" class="text-red-500 text-xs mt-1 hidden">Passwords do not match.</p>
+            </div>
+
+
+
+
+            <button type="submit"
+                class="w-full bg-[--add-btn] hover:bg-[--add-btn-hover] text-[--add-btn-text] font-bold py-2 rounded-lg transition-all duration-200">
+                Sign Up
+            </button>
+
+
+            <p class="text-sm text-center text-[--textarea-text] mt-4">
+                Already have account ?
+                <a href="{% url "login" %}" class="text-[--add-btn] hover:underline">Login</a>
+            </p>
+
+
+        </form>
+    </div>
+
+    <script>
+        const theme = localStorage.getItem('theme')
+
+        console.log(theme);
+
+
+        if (theme === 'dark') {
+            document.body.classList.add('dark');
+        } else {
+            document.body.classList.remove('dark');
+        }
+
+
+    </script>
+
+    {% comment %} <script src="{% static "JS/Signin.js" %}"> </script> {% endcomment %}
+</body>
+
+</html>

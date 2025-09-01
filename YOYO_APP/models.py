@@ -1,0 +1,28 @@
+from django.db import models
+
+class UserData(models.Model):
+    name = models.CharField(max_length=50)
+    email = models.EmailField(max_length=50,unique=True)
+    password = models.CharField(max_length=50)
+
+    
+    def __str__(self):
+        return self.name
+
+class Chat(models.Model):
+    user = models.ForeignKey(UserData, on_delete=models.CASCADE, related_name="chats")
+    title = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.user.name})"
+
+class Message(models.Model):
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name="messages")
+    sender = models.CharField(max_length=10, choices=[("user", "User"), ("bot", "Bot")])
+    text = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender}: {self.text[:20]}"
+
