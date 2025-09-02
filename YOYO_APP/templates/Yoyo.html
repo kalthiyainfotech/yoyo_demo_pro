@@ -66,8 +66,18 @@
                         <div class="recent-section">
                             <h3>Recent</h3>
                             <ul id="recent-chats">
+                                {% for chat in chats %}
+                                    <li>
+                                        <a href="{% url 'chat_detail' chat.id %}">
+                                            {{ chat.title }}
+                                        </a>
+                                    </li>
+                                {% empty %}
+                                    <li>No recent chats</li>
+                                {% endfor %}
                             </ul>
                         </div>
+
                     </div>
                 </div>
 
