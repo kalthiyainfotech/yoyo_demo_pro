@@ -23,8 +23,5 @@ urlpatterns = [
    path("chat/", chat_detail, name="chat_detail"),   
    path("chat/<int:chat_id>/", chat_detail, name="chat_detail"),
    path("chat/<int:chat_id>/send/", send_message, name="send_message"),
-   path("chat/0/send/", send_message, name="send_message"), 
-
-
-   
+   path("chat/0/send/", send_message, name="send_message_new"),
 ]

@@ -272,7 +272,7 @@ body {
 
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 1px;
 }
 
 ::-webkit-scrollbar-track {
@@ -537,7 +537,7 @@ a {
 
 .drawer-data li {
   padding: 12px;
-  border-radius: 25px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -942,7 +942,7 @@ a {
 
 .recent-section li {
   padding: 10px 12px;
-  border-radius: 25px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   gap: 15px;
