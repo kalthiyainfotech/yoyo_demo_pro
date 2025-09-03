@@ -283,3 +283,5 @@ function selectOption(clickedElement) {
     const clickedCheckIcon = clickedElement.querySelector('.fa-circle-check');
     if (clickedCheckIcon) clickedCheckIcon.classList.remove('hidden');
 }
+
+

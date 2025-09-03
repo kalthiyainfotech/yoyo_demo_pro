@@ -158,6 +158,13 @@
                         <div class="recent-section">
                             <h3>Recent</h3>
                             <ul id="recent-chats">
+                                {% for chat in chats %}
+                                    <li onclick="window.location.href='{% url 'chat_detail' chat.id %}'" style="cursor: pointer;">
+                                        {{ chat.title }}
+                                    </li>
+                                {% empty %}
+                                    <li>No recent chats</li>
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>
@@ -857,18 +864,18 @@
 
                 // Add small delay to ensure localStorage is committed
                 setTimeout(() => {
-                    window.location.href = "Yoyo.html";
+                    window.location.href = "{% url 'home' %}";
                 }, 50);
             } catch (e) {
                 console.error('Error setting localStorage:', e);
                 // Fallback to URL parameter if localStorage fails
-                window.location.href = "Yoyo.html?guideline=" + encodeURIComponent(prompt);
+                window.location.href = "{% url 'home' %}?guideline=" + encodeURIComponent(prompt);
             }
         }
 
     </script>
     <script src="{% static "JS/index.js" %}"></script>
-    <!-- <script src="JS/Gemini.js"></script> -->
+    
 </body>
 
 </html>

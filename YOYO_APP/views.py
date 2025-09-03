@@ -166,43 +166,148 @@ def send_message(request, chat_id=None):
     })
 
 def brain_yoyo(request):
-    return render(request,"Brainstormer.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    return render(request, "Brainstormer.html", {
+        "user": user,
+        "chats": chats,
+    })
 
 def Career_guide_yoyo(request):
-    return render(request,"Career_guide.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Career_guide.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Chess_champ_yoyo(request):
-    return render(request,"Chess_champ.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Chess_champ.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Coding_partner_yoyo(request):
-    return render(request,"Coding_partner.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Coding_partner.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Explore_Gem_yoyo(request):
-    return render(request,"Explore_Gem.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Explore_Gem.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def ForgotPassword_yoyo(request):
     return render(request,"ForgotPassword.html")
 
 def Learning_coach_yoyo(request):
-    return render(request,"Learning_coach.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Learning_coach.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def NewGem_yoyo(request):
-    return render(request,"Learning_coach.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"NewGem.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Public_Links_yoyo(request):
-    return render(request,"Public_Links.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Public_Links.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def SavedInfo_yoyo(request):
-    return render(request,"SavedInfo.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"SavedInfo.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Search_yoyo(request):
-    return render(request,"Search.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Search.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Upgrad_yoyo(request):
-    return render(request,"Upgrad.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Upgrad.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Writing_editor_yoyo(request):
-    return render(request,"Writing_editor.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Writing_editor.html",{
+        "user": user,
+        "chats": chats,
+    })
 
 def Explore_Gem_yoyo(request):
-    return render(request,"Explore_Gem.html")
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Explore_Gem.html",{
+        "user": user,
+        "chats": chats,
+    })

@@ -658,6 +658,33 @@
 
 
 
+    <script>
+        (function () {
+            try {
+                const input = document.getElementById('user-input');
+                if (!input) return;
+
+                const params = new URLSearchParams(window.location.search);
+                const urlGuideline = params.get('guideline');
+                const storedGuideline = (function () {
+                    try { return localStorage.getItem('guideline'); } catch (e) { return null; }
+                })();
+
+                const guideline = (urlGuideline && urlGuideline.trim()) || (storedGuideline && storedGuideline.trim());
+                if (guideline) {
+                    input.value = guideline;
+                    if (typeof window.autoResize === 'function') {
+                        window.autoResize(input);
+                    }
+                    input.focus();
+                    try { localStorage.removeItem('guideline'); } catch (e) {}
+                }
+            } catch (e) {
+                console.error('Failed to set guideline into textarea:', e);
+            }
+        })();
+    </script>
+
     <script src="{% static "JS/Gemini.js" %}"></script>
 
     
