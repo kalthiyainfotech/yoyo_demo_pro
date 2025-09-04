@@ -8,11 +8,22 @@ class UserData(models.Model):
     
     def __str__(self):
         return self.name
+class Gem(models.Model):
+    user = models.ForeignKey("UserData", on_delete=models.CASCADE, related_name="gems")
+    name = models.CharField(max_length=100)
+    instructions = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 class Chat(models.Model):
     user = models.ForeignKey(UserData, on_delete=models.CASCADE, related_name="chats")
     title = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
+    gem = models.ForeignKey(Gem, on_delete=models.CASCADE, related_name="chats", null=True, blank=True)
+
 
     def __str__(self):
         return f"{self.title} ({self.user.name})"
@@ -25,13 +36,3 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender}: {self.text[:20]}"
-
-class Gem(models.Model):
-    user = models.ForeignKey("UserData", on_delete=models.CASCADE, related_name="gems")
-    name = models.CharField(max_length=100)
-    instructions = models.TextField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name

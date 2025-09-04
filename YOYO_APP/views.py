@@ -253,13 +253,13 @@ def NewGem_yoyo(request):
                     name=name,
                     instructions=instructions,
                 )
-                return redirect("home")  # redirect to explore gems page
+                return redirect("home") 
             except Exception as e:
-                # Log the error for debugging
+               
                 print(f"Error creating Gem: {e}")
-                # You could also add error messages to the template context
+               
         else:
-            # Log missing data for debugging
+           
             print(f"Missing data - name: {name}, instructions: {instructions}")
 
     return render(request, "NewGem.html", {
@@ -267,16 +267,29 @@ def NewGem_yoyo(request):
         "chats": chats,
     })
 
+def gem_detail(request, gem_id):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    return render(request, "NewGem.html", {"gem": gem, "user": user})
+
+
 def Public_Links_yoyo(request):
     if not request.session.get("user_id"):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
     chats = Chat.objects.filter(user=user).order_by("-created_at")
-    return render(request,"Public_Links.html",{
+
+    return render(request, "Public_Links.html", {
         "user": user,
         "chats": chats,
     })
+
+
 
 def SavedInfo_yoyo(request):
     if not request.session.get("user_id"):

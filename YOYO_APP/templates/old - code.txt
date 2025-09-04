@@ -1056,3 +1056,479 @@ def Writing_editor_yoyo(request):
 
 def Explore_Gem_yoyo(request):
     return render(request,"Explore_Gem.html")
+
+
+
+
+def Public_Links_yoyo(request, gem_id=None):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    gem = None
+    if gem_id is not None:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    if gem is not None:
+        chats = Chat.objects.filter(user=user, gem=gem).order_by("-created_at")
+    else:
+        chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    return render(request, "Public_Links.html", {
+        "user": user,
+        "chats": chats,
+        "gem": gem,
+    })
+
+
+
+04-09-2025
+from django.shortcuts import render, redirect ,get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.hashers import make_password
+from .forms import RegisterForm
+from .models import UserData,Message,Chat,Gem
+from django.contrib.auth.hashers import check_password
+import os ,json
+from bardapi import Bard
+from django.http import JsonResponse
+
+
+
+def register_yoyo(request):
+    if request.session.get("user_id"):
+        return redirect("home")
+
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.password = make_password(form.cleaned_data["password"])  
+            user.save()
+            messages.success(request, "Registration successful! Please login.")
+            return redirect("login")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = RegisterForm()
+    return render(request, "Register.html", {"form": form})
+
+
+def login_yoyo(request):
+    if request.session.get("user_id"):
+        return redirect("home")
+
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        try:
+            user = UserData.objects.get(email=email)
+            if check_password(password, user.password):
+                request.session["user_id"] = user.id
+                request.session["user_name"] = user.name
+                messages.success(request, f"Welcome back, {user.name}!")
+                return redirect("home")
+            else:
+                messages.error(request, "Incorrect password.")
+        except UserData.DoesNotExist:
+            messages.error(request, "Email not registered.")
+
+    return render(request, "Login.html")
+
+
+def logout_yoyo(request):
+    request.session.flush()  
+    return redirect("login")  
+
+
+
+os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
+
+
+def home_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    return render(request, "Yoyo.html", {
+        "user": user,
+        "chats": chats,
+    })
+
+
+def new_chat(request):
+    """Open a blank chat window but do not save to DB yet"""
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    return render(request, "Yoyo.html", {
+        "user": user,
+        "chats": chats,
+        "current_chat": None,
+        "messages": [],
+        "is_new_chat": True,
+    })
+
+
+def chat_detail(request, chat_id=None):
+    """Handles chat messages (existing or new)"""
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chat = None
+    if chat_id:
+        chat = get_object_or_404(Chat, id=chat_id, user=user)
+
+    if request.method == "POST":
+        text = request.POST.get("message")
+        if text:
+            if not chat:
+                chat = Chat.objects.create(user=user, title="New Chat")
+            if chat.title == "New Chat":
+                snippet = " ".join(text.strip().split()[:6])
+                chat.title = snippet.capitalize()
+                chat.save()
+            Message.objects.create(chat=chat, sender="user", text=text)
+            try:
+                bard = Bard()
+                ai_response = bard.get_answer(text).get("content", "⚠️ No reply from Bard.")
+            except Exception as e:
+                ai_response = f" Error: {str(e)}"
+            Message.objects.create(chat=chat, sender="bot", text=ai_response)
+
+            return redirect("chat_detail", chat_id=chat.id)
+    return render(request, "Yoyo.html", {
+        "user": user,
+        "chats": Chat.objects.filter(user=user).order_by("-created_at"),
+        "current_chat": chat,
+        "messages": chat.messages.all() if chat else [],
+        "is_new_chat": chat is None,
+    })
+
+def send_message(request, chat_id=None):
+    if not request.session.get("user_id"):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    data = json.loads(request.body)
+    text = data.get("message", "").strip()
+
+    if not text:
+        return JsonResponse({"error": "Empty message"}, status=400)
+
+    chat = None
+    if chat_id and chat_id != 0:
+        chat = get_object_or_404(Chat, id=chat_id, user=user)
+    if not chat:
+        chat = Chat.objects.create(user=user, title="New Chat")
+    if chat.title == "New Chat":
+        snippet = " ".join(text.split()[:6])
+        chat.title = snippet.capitalize()
+        chat.save()
+    Message.objects.create(chat=chat, sender="user", text=text)
+    try:
+        bard = Bard(token=os.environ.get("_BARD_API_KEY"))
+        ai_response = bard.get_answer(text).get("content", " No reply from Bard.")
+    except Exception as e:
+        ai_response = f" Error: {str(e)}"
+    Message.objects.create(chat=chat, sender="bot", text=ai_response)
+
+    return JsonResponse({
+        "chat_id": chat.id,
+        "user_message": text,
+        "bot_reply": ai_response,
+        "chat_title": chat.title,
+    })
+
+def brain_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    return render(request, "Brainstormer.html", {
+        "user": user,
+        "chats": chats,
+    })
+
+def Career_guide_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Career_guide.html",{
+        "user": user,
+        "chats": chats,
+    })
+
+def Chess_champ_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Chess_champ.html",{
+        "user": user,
+        "chats": chats,
+    })
+
+def Coding_partner_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Coding_partner.html",{
+        "user": user,
+        "chats": chats,
+    })
+
+def Explore_Gem_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Explore_Gem.html",{
+        "user": user,
+        "chats": chats,
+    })
+
+def ForgotPassword_yoyo(request):
+    return render(request,"ForgotPassword.html")
+
+def Learning_coach_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    return render(request,"Learning_coach.html",{
+        "user": user,
+        "chats": chats,
+    })
+
+def NewGem_yoyo(request):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        instructions = request.POST.get("instructions")
+
+        if name and instructions:
+            try:
+                Gem.objects.create(
+                    user=user,
+                    name=name,
+                    instructions=instructions,
+                )
+                return redirect("home") 
+            except Exception as e:
+               
+                print(f"Error creating Gem: {e}")
+               
+        else:
+           
+            print(f"Missing data - name: {name}, instructions: {instructions}")
+
+    return render(request, "NewGem.html", {
+        "user": user,
+        "chats": chats,
+    })
+
+def gem_detail(request, gem_id):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    return render(request, "NewGem.html", {"gem": gem, "user": user})
+
+
+def Public_Links_yoyo(request, gem_id=None):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    gem = None
+    if gem_id:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    return render(request, "Public_Links.html", {
+        "user": user,
+        "chats": chats,
+        "gem": gem,
+    })
+
+
+
+
+
+def SavedInfo_yoyo(request, gem_id=None):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    
+    gem = None
+    if gem_id:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+        
+    return render(request,"SavedInfo.html",{
+        "user": user,
+        "chats": chats,
+        "gem": gem,
+    })
+
+def Search_yoyo(request, gem_id=None):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    
+    gem = None
+    if gem_id:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+        
+    return render(request,"Search.html",{
+        "user": user,
+        "chats": chats,
+        "gem": gem,
+    })
+
+def Upgrad_yoyo(request, gem_id=None):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    
+    gem = None
+    if gem_id:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+        
+    return render(request,"Upgrad.html",{
+        "user": user,
+        "chats": chats,
+        "gem": gem,
+    })
+
+def Writing_editor_yoyo(request, gem_id=None):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    
+    gem = None
+    if gem_id:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+        
+    return render(request,"Writing_editor.html",{
+        "user": user,
+        "chats": chats,
+        "gem": gem,
+    })
+
+def Explore_Gem_yoyo(request, gem_id=None):
+    if not request.session.get("user_id"):
+        return redirect("login")
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    chats = Chat.objects.filter(user=user).order_by("-created_at")
+    gem = None
+    if gem_id:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+        
+    return render(request,"Explore_Gem.html",{
+        "user": user,
+        "chats": chats,
+        "gem": gem,
+    })
+
+
+from django.urls import path 
+from YOYO_APP.views import *
+
+urlpatterns = [
+   path('',login_yoyo,name='login'),
+   path('register/',register_yoyo,name='register'),
+   path('logout/',logout_yoyo,name='logout_yoyo'), 
+   
+   path('home/',home_yoyo,name='home'),
+   path('home/<int:gem_id>/', home_yoyo, name='home_yoyo_with_gem'),
+   
+   path('Brainstormer/',brain_yoyo,name='brain_yoyo'),
+   path('Brainstormer/<int:gem_id>/',brain_yoyo,name='brain_yoyo_with_gem'),
+   
+   path('Career_guide/',Career_guide_yoyo,name='Career_guide_yoyo'),
+   path('Career_guide/<int:gem_id>/',Career_guide_yoyo,name='Career_yoyo_with_gem'),
+   
+   path('Chess_champ/',Chess_champ_yoyo,name='Chess_champ_yoyo'),
+   path('Chess_champ/<int:gem_id>/',Chess_champ_yoyo,name='Chess_champ_yoyo_with_gem'),
+   
+   path('Coding_partner/',Coding_partner_yoyo,name='Coding_partner_yoyo'),
+   path('Coding_partner/<int:gem_id>/',Coding_partner_yoyo,name='Coding_partner_yoyo_with_gem'),
+   
+   path('ForgotPassword/',ForgotPassword_yoyo,name='ForgotPassword_yoyo'),
+   
+   path('Learning_coach/',Learning_coach_yoyo,name='Learning_coach_yoyo'),
+   path('Learning_coach/<int:gem_id>/',Learning_coach_yoyo,name='Learning_coach_yoyo_with_gem'),
+   
+   path('NewGem/',NewGem_yoyo,name='NewGem_yoyo'),
+   path("gem/<int:gem_id>/", gem_detail, name="gem_detail"),
+   
+   
+   path('Public_Links/', Public_Links_yoyo, name='Public_Links_yoyo'),
+   path('Public_Links/<int:gem_id>/', Public_Links_yoyo, name='Public_Links_yoyo_with_gem'),
+   
+   path('SavedInfo/',SavedInfo_yoyo,name='SavedInfo_yoyo'),
+   path('SavedInfo/<int:gem_id>/',SavedInfo_yoyo,name='SavedInfo_yoyo_with_gem'),
+   
+   path('Search/',Search_yoyo,name='Search_yoyo'),
+   path('Search/<int:gem_id>/',Search_yoyo,name='Search_yoyo_with_gem'),
+   
+   path('Upgrad/',Upgrad_yoyo,name='Upgrad_yoyo'),
+   path('Upgrad/<int:gem_id>/',Upgrad_yoyo,name='Upgrad_yoyo_with_gem'),
+   
+   path('Writing_editor/',Writing_editor_yoyo,name='Writing_editor_yoyo'),
+   path('Writing_editor/<int:gem_id>/',Writing_editor_yoyo,name='Writing_editor_yoyo_with_gem'),
+   
+   path('Explore_Gem/',Explore_Gem_yoyo,name='Explore_Gem_yoyo'),
+   path('Explore_Gem/<int:gem_id>/',Explore_Gem_yoyo,name='Explore_Gem_yoyo_with_gem'),
+   
+
+   
+   path("chat/new/", new_chat, name="new_chat"),
+   
+   path("chat/", chat_detail, name="chat_detail"),   
+   
+   path("chat/<int:chat_id>/", chat_detail, name="chat_detail"),
+   
+   path("chat/<int:chat_id>/send/", send_message, name="send_message"),
+   
+   path("chat/0/send/", send_message, name="send_message_new"),
+   
+
+]

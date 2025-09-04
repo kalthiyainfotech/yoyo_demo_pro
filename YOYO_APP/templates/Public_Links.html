@@ -58,6 +58,24 @@
                             </li>
                         </ul>
 
+                        {% comment %} <div class="recent-section">
+                            <h3 class="flex gap-2 items-center">
+                                <span class="text-[#00b0b6] rounded-full bg-[#004144] flex justify-center items-center px-2 py-1">
+                                    <i class="bi bi-book-half"></i>
+                                </span>
+                                Story Book
+                            </h3>
+                            <ul id="recent-chats">
+                                {% for gem in user.gems.all %}
+                                    <li onclick="window.location.href='{% url 'gem_detail' gem.id %}'" style="cursor: pointer;">
+                                        {{ gem.name }}
+                                    </li>
+                                {% empty %}
+                                    <li>No gems yet</li>
+                                {% endfor %}
+                            </ul>
+                        </div> {% endcomment %}
+
                         <div class="recent-section">
                             <h3>Recent</h3>
                             <ul id="recent-chats">
