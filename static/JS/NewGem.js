@@ -1,12 +1,4 @@
-// For all button click handlers, ensure they're not submitting
-document.querySelectorAll('button').forEach(button => {
-    if (button.type !== 'submit') {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Your button's functionality
-        });
-    }
-});
+// Removed global button preventDefault - this was interfering with form submission
 
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -294,54 +286,7 @@ const isCopy = localStorage.getItem('copiedGem') === 'true';
 
 
 
-const handleGemsStore = async (event) => {
-    event.preventDefault(); // <-- prevents page refresh by default
-
-
-    const gemsName = nameInput.value.trim();
-    const gemsDescription = nameTextarea.value.trim();
-    const gemsData = { gemsName, gemsDescription };
-
-    try {
-        let response;
-
-        if (editingGem && !isCopy) {
-            // ✅ Edit mode → PUT
-            response = await fetch(`http://localhost:8080/newGems/${editingGem.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(gemsData),
-            });
-        } else {
-            // ✅ New or copied → POST
-            response = await fetch('http://localhost:8080/newGems', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(gemsData),
-            });
-        }
-
-        if (response.ok) {
-            console.log("Gems data submitted successfully.");
-            console.log("Submitted", gemsData);
-
-            localStorage.removeItem('editingGem');
-            localStorage.removeItem('copiedGem');
-
-
-            // ✅ Only now refresh the page after successful save
-            location.reload();
-        } else {
-            console.error("Failed to submit gems data.");
-        }
-    } catch (error) {
-        console.error("Fetch error:", error);
-    }
-};
+// Removed handleGemsStore function - letting Django handle form submission
 
 document.addEventListener('DOMContentLoaded', () => {
     // Existing code...
@@ -392,11 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         previewSectionChat.style.backgroundColor = "var(--bg-previewSectionChat)"
     }
 
-    // ✅ ✅ ✅ Add form event listener here
-    const form = document.getElementById("myGemsForm");
-    if (form) {
-        form.addEventListener("submit", handleGemsStore);
-    }
+    // Form submission is now handled by Django - no JavaScript intervention needed
 });
 
 

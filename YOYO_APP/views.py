@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect ,get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from .forms import RegisterForm
-from .models import UserData,Message,Chat
+from .models import UserData,Message,Chat,Gem
 from django.contrib.auth.hashers import check_password
 import os ,json
 from bardapi import Bard
@@ -241,7 +241,28 @@ def NewGem_yoyo(request):
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
     chats = Chat.objects.filter(user=user).order_by("-created_at")
-    return render(request,"NewGem.html",{
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        instructions = request.POST.get("instructions")
+
+        if name and instructions:
+            try:
+                Gem.objects.create(
+                    user=user,
+                    name=name,
+                    instructions=instructions,
+                )
+                return redirect("home")  # redirect to explore gems page
+            except Exception as e:
+                # Log the error for debugging
+                print(f"Error creating Gem: {e}")
+                # You could also add error messages to the template context
+        else:
+            # Log missing data for debugging
+            print(f"Missing data - name: {name}, instructions: {instructions}")
+
+    return render(request, "NewGem.html", {
         "user": user,
         "chats": chats,
     })

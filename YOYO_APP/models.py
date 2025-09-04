@@ -26,3 +26,12 @@ class Message(models.Model):
     def __str__(self):
         return f"{self.sender}: {self.text[:20]}"
 
+class Gem(models.Model):
+    user = models.ForeignKey("UserData", on_delete=models.CASCADE, related_name="gems")
+    name = models.CharField(max_length=100)
+    instructions = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
