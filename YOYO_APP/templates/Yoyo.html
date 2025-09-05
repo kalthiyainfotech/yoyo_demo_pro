@@ -264,7 +264,7 @@
                     <div id="chat-history" class=" space-y-4 relative">
                         {% if messages %}
                             {% for message in messages %}
-                                <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-indigo-600 text-white ml-auto{% else %}bg-gray-700 text-gray-200{% endif %}">
+                                <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-indigo-600 text-white ml-auto{% else %}{% endif %}" style="{% if message.sender != 'user' %}background: transparent; color: var(--text-main);{% endif %}">
                                     {{ message.text }}
                                     <div class="text-[10px] opacity-70 mt-1">
                                         {% if message.sender == 'user' %}just now{% else %}YOYO{% endif %}
@@ -622,9 +622,12 @@
             chatArea.scrollTop = chatArea.scrollHeight;
             input.value = "";
 
-            // Bot thinking bubble
+            // Bot thinking bubble (receiver - no background color)
             const botBubble = document.createElement("div");
-            botBubble.className = "fade-in p-3 rounded-lg max-w-xl bg-gray-700 text-gray-200";
+            botBubble.className = "fade-in p-3 rounded-lg max-w-xl";
+            botBubble.style.background = "transparent";
+            botBubble.style.color = "var(--text-main)";
+            botBubble.style.whiteSpace = "pre-wrap";
             botBubble.innerHTML = "YOYO is thinking...";
             chatArea.appendChild(botBubble);
             chatArea.scrollTop = chatArea.scrollHeight;
@@ -653,7 +656,17 @@
                 } else {
                     currentChatId = data.chat_id;
                     console.log('New chat ID:', currentChatId);
-                    botBubble.innerHTML = escapeHtml(data.bot_reply || "No reply");
+                    // Typewriter effect for bot response
+                    const replyText = String(data.bot_reply || "No reply");
+                    botBubble.textContent = "";
+                    botBubble.style.whiteSpace = "pre-wrap";
+                    await (async function typeWriter(el, text, speed) {
+                        for (let i = 0; i < text.length; i++) {
+                            el.textContent += text[i];
+                            await new Promise(r => setTimeout(r, speed));
+                            chatArea.scrollTop = chatArea.scrollHeight;
+                        }
+                    })(botBubble, replyText, 10);
                     
                     // If this was a new chat, redirect to the chat page
                     if (currentChatId && window.location.pathname === '/home/') {
