@@ -66,7 +66,7 @@
     <div class="bg-[--sidebar-bg] rounded-2xl shadow-2xl sm:p-8 p-3 w-full max-w-md w-full">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl sm:text-3xl font-bold text-center text-[--text-main] ">Login to YOYO</h2>
-            <a href="Yoyo.html">
+            <a href="{% url "home" %}">
                 <span
                     class="material-symbols-outlined text-xl sm:text-3xl font-bold text-center text-[--text-main] cursor-pointer">
                     home
@@ -95,7 +95,7 @@
 
 
             <div class="text-right mt-1">
-                <a href="forgotPassword.html" class="text-sm text-[--add-btn] hover:underline">Forgot password?</a>
+                <a href="{% url "ForgotPassword_yoyo" %}" class="text-sm text-[--add-btn] hover:underline">Forgot password?</a>
             </div>
 
 
