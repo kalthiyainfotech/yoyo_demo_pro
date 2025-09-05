@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="icon" href="{% static "img/favicon.ico" %}" type="image/x-icon" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static "css/Yoyo.css" %}">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -159,8 +160,19 @@
                             <h3>Recent</h3>
                             <ul id="recent-chats">
                                 {% for chat in chats %}
-                                    <li onclick="window.location.href='{% url 'chat_detail' chat.id %}'" style="cursor: pointer;">
-                                        {{ chat.title }}
+                                    <li class="chat-item" data-chat-id="{{ chat.id }}">
+                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                            {{ chat.title }}
+                                        </span>
+
+                                        <!-- Actions -->
+                                        <div class="chat-actions">
+                                            <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
+                                            <div class="chat-dropdown hidden">
+                                                <div onclick="startRename(this, '{{ chat.id }}')">Rename</div>
+                                                <div onclick="deleteChat('{{ chat.id }}')">Delete</div>
+                                            </div>
+                                        </div>
                                     </li>
                                 {% empty %}
                                     <li>No recent chats</li>
@@ -875,6 +887,7 @@
 
     </script>
     <script src="{% static "JS/index.js" %}"></script>
+    <script src="{% static "JS/dropdown.js" %}"></script>
     
 </body>
 

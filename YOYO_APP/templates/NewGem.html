@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="icon" href="{% static "img/favicon.ico" %}" type="image/x-icon" />
     <style>
         :root {
             /* Light theme colors */
@@ -282,8 +283,19 @@
                             <h3>Recent</h3>
                             <ul id="recent-chats">
                                 {% for chat in chats %}
-                                    <li onclick="window.location.href='{% url 'chat_detail' chat.id %}'" style="cursor: pointer;">
-                                        {{ chat.title }}
+                                    <li class="chat-item" data-chat-id="{{ chat.id }}">
+                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                            {{ chat.title }}
+                                        </span>
+
+                                        <!-- Actions -->
+                                        <div class="chat-actions">
+                                            <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
+                                            <div class="chat-dropdown hidden">
+                                                <div onclick="startRename(this, '{{ chat.id }}')">Rename</div>
+                                                <div onclick="deleteChat('{{ chat.id }}')">Delete</div>
+                                            </div>
+                                        </div>
                                     </li>
                                 {% empty %}
                                     <li>No recent chats</li>
@@ -928,6 +940,7 @@
 
     <script src="{% static "JS/index.js" %}"></script>
     <script src="{% static "JS/NewGem.js" %}"></script>
+    <script src="{% static "JS/dropdown.js" %}"></script>
 </body>
 
 </html>

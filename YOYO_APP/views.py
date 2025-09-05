@@ -345,3 +345,21 @@ def Explore_Gem_yoyo(request):
         "user": user,
         "chats": chats,
     })
+    
+
+def rename_chat(request, chat_id):
+    if request.method == "POST":
+        chat = get_object_or_404(Chat, id=chat_id, user_id=request.session["user_id"])
+        data = json.loads(request.body)
+        chat.title = data.get("title", chat.title)
+        chat.save()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False}, status=400)
+
+
+def delete_chat(request, chat_id):
+    if request.method == "POST":
+        chat = get_object_or_404(Chat, id=chat_id, user_id=request.session["user_id"])
+        chat.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False}, status=400)

@@ -321,4 +321,3 @@ function autoResize(el) {
     el.style.height = el.scrollHeight + "px"; // Set to scroll height
   }
 
-
