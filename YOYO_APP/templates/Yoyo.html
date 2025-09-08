@@ -72,16 +72,33 @@
                                 </span>
                                 Story Book
                             </h3>
-                            {% comment %} <ul id="recent-chats">
+                            <ul id="story-gems">
                                 {% for gem in user.gems.all %}
-                                    <li onclick="window.location.href='{% url 'gem_detail' gem.id %}'" style="cursor: pointer;">
-                                        {{ gem.name }}
+                                    <li class="chat-item" data-gem-id="{{ gem.id }}">
+                                        <!-- Gem Title -->
+                                        <span class="chat-title"
+                                            onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                            {{ gem.name }}
+                                        </span>
+
+
+                                        <!-- Actions -->
+                                        <div class="chat-actions">
+                                            <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
+                                            <div class="chat-dropdown hidden">
+                                                <div onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
+                                                <div onclick="deleteGem('{{ gem.id }}')">Delete</div>
+                                            </div>
+                                        </div>
                                     </li>
                                 {% empty %}
                                     <li>No gems yet</li>
                                 {% endfor %}
-                            </ul> {% endcomment %}
+                            </ul>
                         </div>
+
+
+                        
                         
 
                         <div class="recent-section">

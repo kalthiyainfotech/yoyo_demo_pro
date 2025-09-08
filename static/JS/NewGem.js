@@ -149,7 +149,29 @@ input.addEventListener("input", () => {
     }
 
     updateSaveButtonState();
+    
+    // Reset preview chat when name changes
+    resetPreviewChat();
 });
+
+// Function to reset preview chat
+function resetPreviewChat() {
+    const chatContainer = document.getElementById('previewChatContainer');
+    const previewBox = document.getElementById('previewBox');
+    const newChatBtn = document.getElementById('newChatBtn');
+    
+    if (chatContainer) {
+        chatContainer.remove();
+    }
+    
+    if (newChatBtn) {
+        newChatBtn.remove();
+    }
+    
+    if (previewBox) {
+        previewBox.style.display = 'flex';
+    }
+}
 
 
 const plusButton = document.getElementById('plus-button');
@@ -216,14 +238,147 @@ function autoResize(textarea) {
     }
 }
 
-// document.getElementById('send-button').addEventListener('click', () => {
-//     const value = userInput.value.trim();
-//     if (value) {
-//         previewText.textContent = `Previewing "${value}" Gem`;
-//     } else {
-//         previewText.textContent = 'To preview your Gem start by giving it a name';
-//     }
-// });
+// Preview chat functionality
+const sendButton = document.getElementById('send-button');
+const previewBox = document.getElementById('previewBox');
+
+// Function to create chat message elements
+function createMessageElement(sender, message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mb-4 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+    
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = `inline-block max-w-[80%] p-3 rounded-lg`;
+    
+    // Apply theme-aware styling
+    if (sender === 'user') {
+        bubbleDiv.style.backgroundColor = 'var(--user-bubble-bg)';
+        bubbleDiv.style.color = 'var(--user-bubble-text)';
+    } else {
+        bubbleDiv.style.backgroundColor = 'var(--gemini-bubble-bg)';
+        bubbleDiv.style.color = 'var(--gemini-bubble-text)';
+        bubbleDiv.style.border = '1px solid var(--border-color)';
+    }
+    
+    bubbleDiv.textContent = message;
+    messageDiv.appendChild(bubbleDiv);
+    
+    return messageDiv;
+}
+
+// Function to display chat messages
+function displayChatMessages(messages) {
+    const chatContainer = document.createElement('div');
+    chatContainer.className = 'space-y-4 p-4 max-h-96 overflow-y-auto';
+    
+    messages.forEach(msg => {
+        const messageElement = createMessageElement(msg.sender, msg.text);
+        chatContainer.appendChild(messageElement);
+    });
+    
+    return chatContainer;
+}
+
+// Function to send message to preview chat
+async function sendPreviewMessage() {
+    const message = userInput.value.trim();
+    const gemName = document.getElementById('nameInput').value.trim();
+    const gemInstructions = document.getElementById('nameTextarea').value.trim();
+    
+    if (!message) return;
+    
+    // Show loading state
+    const originalSendIcon = sendIcon.innerHTML;
+    sendIcon.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>';
+    sendButton.disabled = true;
+    
+    try {
+        const response = await fetch('/newgem/preview-chat/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                message: message,
+                name: gemName,
+                instructions: gemInstructions
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Hide the preview box and show chat
+            previewBox.style.display = 'none';
+            
+            // Create or update chat container
+            let chatContainer = document.getElementById('previewChatContainer');
+            if (!chatContainer) {
+                chatContainer = document.createElement('div');
+                chatContainer.id = 'previewChatContainer';
+                chatContainer.className = 'h-96 overflow-y-auto p-4 space-y-4';
+                chatContainer.style.backgroundColor = 'var(--preview-bg)';
+                previewBox.parentNode.insertBefore(chatContainer, previewBox);
+            }
+            
+            // Add messages to chat
+            const userMessage = createMessageElement('user', data.user_message);
+            const botMessage = createMessageElement('bot', data.bot_reply);
+            
+            chatContainer.appendChild(userMessage);
+            chatContainer.appendChild(botMessage);
+            
+            // Add "New Chat" button if it doesn't exist
+            if (!document.getElementById('newChatBtn')) {
+                const newChatBtn = document.createElement('button');
+                newChatBtn.id = 'newChatBtn';
+                newChatBtn.textContent = 'New Chat';
+                newChatBtn.className = 'mt-4 px-4 py-2 rounded-lg text-sm font-medium';
+                newChatBtn.style.backgroundColor = 'var(--button-primary-bg)';
+                newChatBtn.style.color = 'var(--button-primary-text)';
+                newChatBtn.onclick = () => resetPreviewChat();
+                chatContainer.appendChild(newChatBtn);
+            }
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Clear input
+            userInput.value = '';
+            autoResize(userInput);
+            
+        } else {
+            alert('Error: ' + (data.error || 'Failed to get response'));
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error sending message. Please try again.');
+    } finally {
+        // Restore send button
+        sendIcon.innerHTML = originalSendIcon;
+        sendButton.disabled = false;
+    }
+}
+
+// Add event listener for send button
+if (sendButton) {
+    sendButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        sendPreviewMessage();
+    });
+}
+
+// Add event listener for Enter key
+if (userInput) {
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendPreviewMessage();
+        }
+    });
+}
 
 const textarea = document.getElementById('nameTextarea');
 const undoBtn = document.getElementById('undoBtn');
@@ -235,6 +390,9 @@ const redoStack = [];
 textarea.addEventListener('input', () => {
     undoStack.push(textarea.value);
     redoStack.length = 0;
+    
+    // Reset preview chat when instructions change
+    resetPreviewChat();
 });
 
 undoBtn.addEventListener('click', () => {
@@ -339,5 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Form submission is now handled by Django - no JavaScript intervention needed
 });
+
 
 

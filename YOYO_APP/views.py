@@ -56,10 +56,7 @@ def logout_yoyo(request):
     request.session.flush()  
     return redirect("login")  
 
-
-
 os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
-
 
 def home_yoyo(request):
     if not request.session.get("user_id"):
@@ -73,15 +70,29 @@ def home_yoyo(request):
         "chats": chats,
     })
 
-
 def new_chat(request):
-    """Open a blank chat window but do not save to DB yet"""
+    """Open a blank chat window, linked to a gem if provided"""
     if not request.session.get("user_id"):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
     chats = Chat.objects.filter(user=user).order_by("-created_at")
 
+    gem_id = request.GET.get("gem_id")
+    gem = None
+    if gem_id:
+        gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    # Create a new chat immediately if gem is provided
+    if gem:
+        chat = Chat.objects.create(
+            user=user,
+            title=f"Chat about {gem.name}",
+            gem=gem
+        )
+        return redirect("chat_detail", chat_id=chat.id)
+
+    # Otherwise, just show a blank chat window
     return render(request, "Yoyo.html", {
         "user": user,
         "chats": chats,
@@ -276,7 +287,6 @@ def gem_detail(request, gem_id):
 
     return render(request, "NewGem.html", {"gem": gem, "user": user})
 
-
 def Public_Links_yoyo(request):
     if not request.session.get("user_id"):
         return redirect("login")
@@ -288,8 +298,6 @@ def Public_Links_yoyo(request):
         "user": user,
         "chats": chats,
     })
-
-
 
 def SavedInfo_yoyo(request):
     if not request.session.get("user_id"):
@@ -346,7 +354,6 @@ def Explore_Gem_yoyo(request):
         "chats": chats,
     })
     
-
 def rename_chat(request, chat_id):
     if request.method == "POST":
         chat = get_object_or_404(Chat, id=chat_id, user_id=request.session["user_id"])
@@ -356,10 +363,53 @@ def rename_chat(request, chat_id):
         return JsonResponse({"success": True})
     return JsonResponse({"success": False}, status=400)
 
-
 def delete_chat(request, chat_id):
     if request.method == "POST":
         chat = get_object_or_404(Chat, id=chat_id, user_id=request.session["user_id"])
         chat.delete()
         return JsonResponse({"success": True})
     return JsonResponse({"success": False}, status=400)
+
+def newgem_preview_chat(request):
+    """Handle preview chat for NewGem with Bard API integration"""
+    if not request.session.get("user_id"):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    data = json.loads(request.body)
+    
+    # Get the message and gem instructions
+    message = data.get("message", "").strip()
+    gem_instructions = data.get("instructions", "").strip()
+    gem_name = data.get("name", "New Gem").strip()
+
+    if not message:
+        return JsonResponse({"error": "Empty message"}, status=400)
+
+    try:
+        # Create a custom prompt that includes the gem instructions
+        if gem_instructions:
+            # Combine gem instructions with the user's message
+            custom_prompt = f"You are a specialized AI assistant with the following characteristics and instructions:\n\n{gem_instructions}\n\nNow, please respond to this user query: {message}"
+        else:
+            custom_prompt = message
+
+        # Get response from Bard API
+        bard = Bard(token=os.environ.get("_BARD_API_KEY"))
+        ai_response = bard.get_answer(custom_prompt).get("content", "⚠️ No reply from Bard.")
+        
+        return JsonResponse({
+            "user_message": message,
+            "bot_reply": ai_response,
+            "gem_name": gem_name,
+            "success": True
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "error": f"Error getting AI response: {str(e)}",
+            "success": False
+        }, status=500)

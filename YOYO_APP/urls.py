@@ -26,6 +26,7 @@ urlpatterns = [
    path("chat/0/send/", send_message, name="send_message_new"),
    path("chat/<int:chat_id>/rename/", rename_chat, name="rename_chat"),
    path("chat/<int:chat_id>/delete/", delete_chat, name="delete_chat"),
-   # path("gem/<int:gem_id>/", gem_detail, name="gem_detail"),
+   path("gem/<int:gem_id>/", gem_detail, name="gem_detail"),
+   path("newgem/preview-chat/", newgem_preview_chat, name="newgem_preview_chat"),
 
 ]
