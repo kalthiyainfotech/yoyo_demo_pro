@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static "css/Yoyo.css" %}">
     <link rel="icon" href="{% static "img/favicon.ico" %}" type="image/x-icon" />
@@ -176,15 +178,59 @@
                         </ul>
 
                         <div class="recent-section">
+                            <h3 class="flex gap-2 items-center">
+                                <span class="text-[#00b0b6] rounded-full bg-[#004144] flex justify-center items-center px-2 py-1">
+                                    <i class="bi bi-book-half"></i>
+                                </span>
+                                Story Book
+                            </h3>
+                            <ul id="story-gems">
+                                {% for gem in story_gems %}
+                                    <li class="chat-item" data-gem-id="{{ gem.id }}">
+                                        <!-- Gem Title only -->
+                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                            {{ gem.name }}
+                                        </span>
+
+                                        <!-- Actions -->
+                                        <div class="chat-actions">
+                                            <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
+                                            <div class="chat-dropdown hidden">
+                                                <div onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
+                                                <div onclick="deleteGem('{{ gem.id }}')">Delete</div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% empty %}
+                                    <li>No gems yet</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <!-- Delete Confirmation Modal -->
+                        <div id="deleteModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                        <div class="bg-black p-6 rounded-xl shadow-lg w-80">
+                            <h2 class="text-lg font-semibold mb-4">Confirm Delete</h2>
+                            <p class="mb-6">Are you sure you want to delete this Chat?</p>
+                            <div class="flex justify-end gap-3">
+                            <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 rounded-lg text-black">Cancel</button>
+                            <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
+                            </div>
+                        </div>
+                        </div>
+
+
+                        
+                        
+
+                        <div class="recent-section">
                             <h3>Recent</h3>
                             <ul id="recent-chats">
-                                {% for chat in chats %}
+                                {% for chat in recent_chats %}
                                     <li class="chat-item" data-chat-id="{{ chat.id }}">
                                         <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
                                             {{ chat.title }}
                                         </span>
-
-                                        <!-- Actions -->
                                         <div class="chat-actions">
                                             <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
                                             <div class="chat-dropdown hidden">
@@ -197,6 +243,7 @@
                                     <li>No recent chats</li>
                                 {% endfor %}
                             </ul>
+
                         </div>
                     </div>
                 </div>
@@ -336,7 +383,7 @@
                     <a href="{% url "Upgrad_yoyo" %}"
                         class="h-9 block cursor-pointer rounded-md flex items-center justify-center text-xs font-semibold px-6 mr-3"
                         style="background-color: var(--sidebar-hover);">
-
+                        <img rel="" src="{% static "img/favicon.png" %}" class="w-[20px] me-2" />
                         Upgrade
                     </a>
                     <div id="account"></div>

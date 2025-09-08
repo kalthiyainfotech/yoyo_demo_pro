@@ -63,11 +63,17 @@ def home_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
 
-    return render(request, "Yoyo.html", {
+
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+  
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
+
+    return render(request, "YOYO.html", {
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def new_chat(request):
@@ -76,14 +82,19 @@ def new_chat(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+   
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
 
     gem_id = request.GET.get("gem_id")
     gem = None
     if gem_id:
         gem = get_object_or_404(Gem, id=gem_id, user=user)
 
-    # Create a new chat immediately if gem is provided
+    
     if gem:
         chat = Chat.objects.create(
             user=user,
@@ -92,15 +103,15 @@ def new_chat(request):
         )
         return redirect("chat_detail", chat_id=chat.id)
 
-    # Otherwise, just show a blank chat window
+    
     return render(request, "Yoyo.html", {
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
         "current_chat": None,
         "messages": [],
         "is_new_chat": True,
     })
-
 
 def chat_detail(request, chat_id=None):
     """Handles chat messages (existing or new)"""
@@ -108,6 +119,12 @@ def chat_detail(request, chat_id=None):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+
+    # Recent = chats without gem
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    # Story Book = gems with their chats
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     chat = None
     if chat_id:
         chat = get_object_or_404(Chat, id=chat_id, user=user)
@@ -136,6 +153,8 @@ def chat_detail(request, chat_id=None):
         "current_chat": chat,
         "messages": chat.messages.all() if chat else [],
         "is_new_chat": chat is None,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def send_message(request, chat_id=None):
@@ -181,11 +200,17 @@ def brain_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
 
     return render(request, "Brainstormer.html", {
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Career_guide_yoyo(request):
@@ -193,10 +218,16 @@ def Career_guide_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Career_guide.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Chess_champ_yoyo(request):
@@ -204,10 +235,16 @@ def Chess_champ_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Chess_champ.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Coding_partner_yoyo(request):
@@ -215,10 +252,16 @@ def Coding_partner_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Coding_partner.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Explore_Gem_yoyo(request):
@@ -226,10 +269,16 @@ def Explore_Gem_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Explore_Gem.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def ForgotPassword_yoyo(request):
@@ -240,10 +289,16 @@ def Learning_coach_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Learning_coach.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def NewGem_yoyo(request):
@@ -251,7 +306,14 @@ def NewGem_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
+    
+    
 
     if request.method == "POST":
         name = request.POST.get("name")
@@ -275,7 +337,8 @@ def NewGem_yoyo(request):
 
     return render(request, "NewGem.html", {
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def gem_detail(request, gem_id):
@@ -292,11 +355,17 @@ def Public_Links_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
 
     return render(request, "Public_Links.html", {
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def SavedInfo_yoyo(request):
@@ -304,10 +373,16 @@ def SavedInfo_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"SavedInfo.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Search_yoyo(request):
@@ -315,10 +390,16 @@ def Search_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Search.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Upgrad_yoyo(request):
@@ -326,10 +407,16 @@ def Upgrad_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Upgrad.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Writing_editor_yoyo(request):
@@ -337,10 +424,16 @@ def Writing_editor_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Writing_editor.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
 
 def Explore_Gem_yoyo(request):
@@ -348,10 +441,16 @@ def Explore_Gem_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    chats = Chat.objects.filter(user=user).order_by("-created_at")
+
+    
+    recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
+
+    
+    story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     return render(request,"Explore_Gem.html",{
         "user": user,
-        "chats": chats,
+        "recent_chats": recent_chats,
+        "story_gems": story_gems,
     })
     
 def rename_chat(request, chat_id):
@@ -381,7 +480,7 @@ def newgem_preview_chat(request):
     user = get_object_or_404(UserData, id=request.session["user_id"])
     data = json.loads(request.body)
     
-    # Get the message and gem instructions
+
     message = data.get("message", "").strip()
     gem_instructions = data.get("instructions", "").strip()
     gem_name = data.get("name", "New Gem").strip()
@@ -390,14 +489,14 @@ def newgem_preview_chat(request):
         return JsonResponse({"error": "Empty message"}, status=400)
 
     try:
-        # Create a custom prompt that includes the gem instructions
+        
         if gem_instructions:
-            # Combine gem instructions with the user's message
+            
             custom_prompt = f"You are a specialized AI assistant with the following characteristics and instructions:\n\n{gem_instructions}\n\nNow, please respond to this user query: {message}"
         else:
             custom_prompt = message
 
-        # Get response from Bard API
+       
         bard = Bard(token=os.environ.get("_BARD_API_KEY"))
         ai_response = bard.get_answer(custom_prompt).get("content", "⚠️ No reply from Bard.")
         
@@ -413,3 +512,36 @@ def newgem_preview_chat(request):
             "error": f"Error getting AI response: {str(e)}",
             "success": False
         }, status=500)
+        
+def rename_gem(request, gem_id):
+    """Rename a gem in Story Book"""
+    if not request.session.get("user_id"):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    if request.method == "POST":
+        data = json.loads(request.body)
+        new_name = data.get("name", "").strip()
+        if new_name:
+            gem.name = new_name
+            gem.save()
+            return JsonResponse({"success": True, "new_name": gem.name})
+        return JsonResponse({"error": "Invalid name"}, status=400)
+
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+def delete_gem(request, gem_id):
+    """Delete a gem from Story Book"""
+    if not request.session.get("user_id"):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    if request.method == "POST":
+        gem.delete()
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"error": "Invalid request"}, status=400)

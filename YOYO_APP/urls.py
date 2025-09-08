@@ -28,5 +28,8 @@ urlpatterns = [
    path("chat/<int:chat_id>/delete/", delete_chat, name="delete_chat"),
    path("gem/<int:gem_id>/", gem_detail, name="gem_detail"),
    path("newgem/preview-chat/", newgem_preview_chat, name="newgem_preview_chat"),
+   path("gem/<int:gem_id>/rename/", rename_gem, name="rename_gem"),
+   path("gem/<int:gem_id>/delete/", delete_gem, name="delete_gem"),
+
 
 ]
