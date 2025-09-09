@@ -292,7 +292,7 @@
                         {% if messages %}
                             {% for message in messages %}
                                 <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-[#212529] text-white ml-auto{% else %}{% endif %}" style="{% if message.sender != 'user' %}background: transparent; color: var(--text-main);{% endif %}">
-                                    {% if message.text %}{{ message.text }}{% endif %}
+                                    {% if message.text %}<div style="white-space: pre-wrap;">{{ message.text }}</div>{% endif %}
                                     {% if message.image %}
                                         <div class="mt-2">
                                             <img src="{{ message.image.url }}" class="max-w-[220px] rounded-lg" alt="uploaded image" />
@@ -712,17 +712,38 @@
                 } else {
                     currentChatId = data.chat_id;
                     console.log('New chat ID:', currentChatId);
-                    // Typewriter effect for bot response
+                    // Typewriter effect for bot response with background-tab handling
                     const replyText = String(data.bot_reply || "No reply");
                     botBubble.textContent = "";
                     botBubble.style.whiteSpace = "pre-wrap";
+
+                    let instantRender = document.hidden === true;
+                    const handleVisibility = () => {
+                        if (document.hidden) {
+                            instantRender = true;
+                        }
+                    };
+                    document.addEventListener('visibilitychange', handleVisibility);
+
                     await (async function typeWriter(el, text, speed) {
+                        if (instantRender) {
+                            el.textContent = text;
+                            chatArea.scrollTop = chatArea.scrollHeight;
+                            return;
+                        }
                         for (let i = 0; i < text.length; i++) {
+                            if (instantRender) {
+                                el.textContent = text;
+                                chatArea.scrollTop = chatArea.scrollHeight;
+                                break;
+                            }
                             el.textContent += text[i];
                             await new Promise(r => setTimeout(r, speed));
                             chatArea.scrollTop = chatArea.scrollHeight;
                         }
                     })(botBubble, replyText, 10);
+
+                    document.removeEventListener('visibilitychange', handleVisibility);
                     
                     // If this was a new chat, redirect to the chat page
                     if (currentChatId && window.location.pathname === '/home/') {
@@ -755,6 +776,7 @@
         window.autoResize = autoResize;
     })();
 </script>
+
 
 
 

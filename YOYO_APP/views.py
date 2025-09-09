@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import check_password
 import os ,json
 from bardapi import Bard
 from django.http import JsonResponse
+os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
 
 
 
@@ -27,7 +28,6 @@ def register_yoyo(request):
     else:
         form = RegisterForm()
     return render(request, "Register.html", {"form": form})
-
 
 def login_yoyo(request):
     if request.session.get("user_id"):
@@ -51,12 +51,9 @@ def login_yoyo(request):
 
     return render(request, "Login.html")
 
-
 def logout_yoyo(request):
     request.session.flush()  
     return redirect("login")  
-
-os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
 
 def home_yoyo(request):
     if not request.session.get("user_id"):
