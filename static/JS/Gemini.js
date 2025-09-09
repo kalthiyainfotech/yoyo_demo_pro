@@ -210,7 +210,36 @@ document.addEventListener('DOMContentLoaded', function () {
         fileInput.addEventListener('change', function () {
             if (this.files && this.files[0]) {
                 console.log('File selected:', this.files[0].name);
-                // You can add file preview functionality here if needed
+                
+                // Show image preview
+                const file = this.files[0];
+                const imagePreview = document.getElementById('image-preview');
+                const imagePreviewContainer = document.getElementById('image-preview-container');
+                
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreviewContainer.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    }
+
+    // Remove image preview functionality
+    const removePreviewBtn = document.getElementById('remove-preview');
+    if (removePreviewBtn) {
+        removePreviewBtn.addEventListener('click', function() {
+            const imagePreviewContainer = document.getElementById('image-preview-container');
+            const fileInput = document.getElementById('upload-preview-input');
+            
+            if (imagePreviewContainer) {
+                imagePreviewContainer.classList.add('hidden');
+            }
+            if (fileInput) {
+                fileInput.value = '';
             }
         });
     }

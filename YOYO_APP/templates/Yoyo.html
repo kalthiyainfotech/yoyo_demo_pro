@@ -291,7 +291,7 @@
                     <div id="chat-history" class=" space-y-4 relative">
                         {% if messages %}
                             {% for message in messages %}
-                                <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-indigo-600 text-white ml-auto{% else %}{% endif %}" style="{% if message.sender != 'user' %}background: transparent; color: var(--text-main);{% endif %}">
+                                <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-[#212529] text-white ml-auto{% else %}{% endif %}" style="{% if message.sender != 'user' %}background: transparent; color: var(--text-main);{% endif %}">
                                     {{ message.text }}
                                     <div class="text-[10px] opacity-70 mt-1">
                                         {% if message.sender == 'user' %}{% else %}YOYO{% endif %}
@@ -643,7 +643,7 @@
 
             // User bubble
             const userBubble = document.createElement("div");
-            userBubble.className = "fade-in p-3 rounded-lg max-w-xl bg-indigo-600 text-white ml-auto";
+            userBubble.className = "fade-in p-3 rounded-lg max-w-xl bg-[#212529] text-white ml-auto";
             userBubble.innerHTML = `${escapeHtml(text)}<div class="text-[10px] opacity-70 mt-1"></div>`;
             chatArea.appendChild(userBubble);
             chatArea.scrollTop = chatArea.scrollHeight;
