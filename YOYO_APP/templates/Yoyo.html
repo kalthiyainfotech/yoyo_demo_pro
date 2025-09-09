@@ -292,7 +292,12 @@
                         {% if messages %}
                             {% for message in messages %}
                                 <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-[#212529] text-white ml-auto{% else %}{% endif %}" style="{% if message.sender != 'user' %}background: transparent; color: var(--text-main);{% endif %}">
-                                    {{ message.text }}
+                                    {% if message.text %}{{ message.text }}{% endif %}
+                                    {% if message.image %}
+                                        <div class="mt-2">
+                                            <img src="{{ message.image.url }}" class="max-w-[220px] rounded-lg" alt="uploaded image" />
+                                        </div>
+                                    {% endif %}
                                     <div class="text-[10px] opacity-70 mt-1">
                                         {% if message.sender == 'user' %}{% else %}YOYO{% endif %}
                                     </div>
@@ -628,7 +633,9 @@
 
         async function sendMessage() {
             const text = input.value.trim();
-            if (!text) return;
+            const fileInput = document.getElementById('upload-preview-input');
+            const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            if (!text && !file) return;
 
             console.log('Sending message:', text);
             console.log('Current chat ID before send:', currentChatId);
@@ -644,7 +651,15 @@
             // User bubble
             const userBubble = document.createElement("div");
             userBubble.className = "fade-in p-3 rounded-lg max-w-xl bg-[#212529] text-white ml-auto";
-            userBubble.innerHTML = `${escapeHtml(text)}<div class="text-[10px] opacity-70 mt-1"></div>`;
+            let bubbleInner = "";
+            if (text) {
+                bubbleInner += `${escapeHtml(text)}`;
+            }
+            if (file && file.type.startsWith('image/')) {
+                const imgURL = URL.createObjectURL(file);
+                bubbleInner += `<div class=\"mt-2\"><img src=\"${imgURL}\" class=\"max-w-[220px] rounded-lg\" /></div>`;
+            }
+            userBubble.innerHTML = bubbleInner + `<div class=\"text-[10px] opacity-70 mt-1\"></div>`;
             chatArea.appendChild(userBubble);
             chatArea.scrollTop = chatArea.scrollHeight;
             input.value = "";
@@ -655,20 +670,34 @@
             botBubble.style.background = "transparent";
             botBubble.style.color = "var(--text-main)";
             botBubble.style.whiteSpace = "pre-wrap";
-            botBubble.innerHTML = "YOYO is thinking...";
+            botBubble.innerHTML = "thinking...";
             chatArea.appendChild(botBubble);
             chatArea.scrollTop = chatArea.scrollHeight;
 
             try {
                 const url = buildSendUrl(currentChatId || 0);
-                const res = await fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCsrfToken(),
-                    },
-                    body: JSON.stringify({ message: text }),
-                });
+                let res;
+                if (file) {
+                    const form = new FormData();
+                    form.append('message', text);
+                    form.append('image', file);
+                    res = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCsrfToken(),
+                        },
+                        body: form,
+                    });
+                } else {
+                    res = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCsrfToken(),
+                        },
+                        body: JSON.stringify({ message: text }),
+                    });
+                }
 
                 if (!res.ok) {
                     botBubble.innerHTML = `⚠️ Server error: ${res.status}`;

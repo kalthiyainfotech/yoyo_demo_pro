@@ -130,18 +130,21 @@ def chat_detail(request, chat_id=None):
         chat = get_object_or_404(Chat, id=chat_id, user=user)
 
     if request.method == "POST":
-        text = request.POST.get("message")
-        if text:
+        text = request.POST.get("message", "").strip()
+        image = request.FILES.get("image")
+        if text or image:
             if not chat:
                 chat = Chat.objects.create(user=user, title="New Chat")
             if chat.title == "New Chat":
-                snippet = " ".join(text.strip().split()[:6])
+                snippet_source = text or "Image message"
+                snippet = " ".join(snippet_source.strip().split()[:6])
                 chat.title = snippet.capitalize()
                 chat.save()
-            Message.objects.create(chat=chat, sender="user", text=text)
+            Message.objects.create(chat=chat, sender="user", text=text, image=image)
             try:
                 bard = Bard()
-                ai_response = bard.get_answer(text).get("content", "⚠️ No reply from Bard.")
+                prompt = text or "Describe the attached image."
+                ai_response = bard.get_answer(prompt).get("content", "⚠️ No reply from Bard.")
             except Exception as e:
                 ai_response = f" Error: {str(e)}"
             Message.objects.create(chat=chat, sender="bot", text=ai_response)
@@ -165,10 +168,21 @@ def send_message(request, chat_id=None):
         return JsonResponse({"error": "Invalid request"}, status=400)
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    data = json.loads(request.body)
-    text = data.get("message", "").strip()
+    text = ""
+    image = None
+    # Support JSON and multipart/form-data
+    content_type = request.META.get("CONTENT_TYPE", "")
+    if content_type.startswith("multipart/form-data"):
+        text = request.POST.get("message", "").strip()
+        image = request.FILES.get("image")
+    else:
+        try:
+            data = json.loads(request.body or b"{}")
+        except Exception:
+            data = {}
+        text = str(data.get("message", "")).strip()
 
-    if not text:
+    if not text and not image:
         return JsonResponse({"error": "Empty message"}, status=400)
 
     chat = None
@@ -177,13 +191,15 @@ def send_message(request, chat_id=None):
     if not chat:
         chat = Chat.objects.create(user=user, title="New Chat")
     if chat.title == "New Chat":
-        snippet = " ".join(text.split()[:6])
+        snippet_source = text or "Image message"
+        snippet = " ".join(snippet_source.split()[:6])
         chat.title = snippet.capitalize()
         chat.save()
-    Message.objects.create(chat=chat, sender="user", text=text)
+    Message.objects.create(chat=chat, sender="user", text=text, image=image)
     try:
         bard = Bard(token=os.environ.get("_BARD_API_KEY"))
-        ai_response = bard.get_answer(text).get("content", " No reply from Bard.")
+        prompt = text or "Describe the attached image."
+        ai_response = bard.get_answer(prompt).get("content", " No reply from Bard.")
     except Exception as e:
         ai_response = f" Error: {str(e)}"
     Message.objects.create(chat=chat, sender="bot", text=ai_response)
