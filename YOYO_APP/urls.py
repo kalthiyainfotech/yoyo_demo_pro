@@ -30,6 +30,7 @@ urlpatterns = [
    path("newgem/preview-chat/", newgem_preview_chat, name="newgem_preview_chat"),
    path("gem/<int:gem_id>/rename/", rename_gem, name="rename_gem"),
    path("gem/<int:gem_id>/delete/", delete_gem, name="delete_gem"),
+   path("chat/<int:gem_id>/", chat_page, name="chat_page"),
 
 
 ]

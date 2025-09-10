@@ -690,10 +690,36 @@
                                     New Gem
                                 </a>
                             </div>
-                            <div id="showGems" class="flex flex-col gap-2"></div>
+                            <div id="showGems" class="flex flex-col gap-2">
+                                {% if story_gems %}
+                                    {% for gem in story_gems %}
+                                        <div class="chat-item group p-4 rounded-lg shadow bg-[--bg-hover] hover:bg-[--border-color] transition flex items-center justify-between"
+                                            data-gem-id="{{ gem.id }}">
+
+                                            <!-- Gem Title -->
+                                            <span class="chat-title cursor-pointer" 
+                                                onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                                {{ gem.name }}
+                                            </span>
+
+                                            <!-- Actions -->
+                                            <div class="chat-actions relative">
+                                                <span class="chat-menu cursor-pointer" onclick="toggleMenu(this)">⋮</span>
+                                                <div class="chat-dropdown hidden absolute right-0 mt-2 w-28 bg-[--bg-hover] border border-[--border-color] rounded shadow">
+                                                    <div class="px-3 py-1 hover:bg-[--border-color] cursor-pointer" onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
+                                                    <div class="px-3 py-1 hover:bg-[--border-color] cursor-pointer" onclick="deleteGem('{{ gem.id }}')">Delete</div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-gray-500">No gems found.</p>
+                                {% endif %}
+                            </div>
+
 
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -943,272 +969,7 @@
 
     </script>
 
-    <script>
-        const toggleBtnExpore = document.getElementById("toggleBtnExpore");
-        const toggleTextExplore = document.getElementById("toggleTextExplore");
-        const extraCards = document.querySelectorAll(".extra-card");
-        const themeToggle = document.getElementById("themeToggle");
-        const body = document.body;
 
-        let expanded = false;
-
-
-
-        // Toggle button for showing/hiding extra cards
-        toggleBtnExpore.addEventListener("click", () => {
-            expanded = !expanded;
-            toggleTextExplore.textContent = expanded ? "Show less" : "Show more";
-
-            extraCards.forEach(card => {
-                if (expanded) {
-                    card.classList.remove("max-h-0", "opacity-0", "scale-y-90");
-                    card.classList.add("max-h-[200px]", "opacity-100", "scale-y-100");
-                } else {
-                    card.classList.remove("max-h-[200px]", "opacity-100", "scale-y-100");
-                    card.classList.add("max-h-0", "opacity-0", "scale-y-90");
-                }
-            });
-        });
-
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                console.log('Copied: ' + text);
-                // Close the menu after copying
-                document.querySelectorAll('.copy-menu-content').forEach(menu => {
-                    menu.style.display = 'none';
-                });
-            });
-        }
-    </script>
-
-    <script>
-
-        const colorPalette = [
-            "#F44336",
-            "#E91E63",
-            "#9C27B0",
-            "#3F51B5",
-            "#2196F3",
-            "#00BCD4",
-            "#009688",
-            "#4CAF50",
-            "#FF9800",
-            "#795548",
-            "#607D8B",
-            "#FF5722",
-            "#673AB7"
-        ];
-
-
-        function getColorFromPalette(name) {
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return colorPalette[Math.abs(hash) % colorPalette.length];
-        }
-
-
-        function getContrastColor(bg) {
-            const hex = bg.replace("#", "");
-            const r = parseInt(hex.substr(0, 2), 16);
-            const g = parseInt(hex.substr(2, 2), 16);
-            const b = parseInt(hex.substr(4, 2), 16);
-            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            return brightness > 150 ? "#000000" : "#FFFFFF";
-        }
-
-        async function fetchGemsData() {
-            const showGems = document.getElementById("showGems");
-
-            try {
-                const response = await fetch('http://localhost:8080/newGems');
-                const gemsdata = await response.json();
-
-                showGems.innerHTML = "";
-
-                if (gemsdata && gemsdata.length > 0) {
-                    gemsdata.forEach((v, i) => {
-                        const bgColor = getColorFromPalette(v.gemsName || "default");
-                        const textColor = getContrastColor(bgColor);
-
-                        showGems.innerHTML += `
-                        <div class="rounded-xl p-4 x-gem text-[var(--text-muted)] flex justify-between items-center bg-[var(--your-gems-bg)] hover:bg-[--gems-bg-hover]">
-                            <div class="flex items-center gap-4">
-                                <button
-                                    class="w-8 h-8 rounded-full flex items-center justify-center font-medium"
-                                    style="background-color: ${bgColor}; color: ${textColor};">
-                                    ${v.gemsName?.charAt(0).toUpperCase() || "U"}
-                                </button>
-                                <div class="flex flex-col gap-2 ">
-                                    <p class="text-[12px] font-medium text-[--text-main]">${v.gemsName || "No Name"}</p>
-                                    <span title="${v.gemsDescription || ''}" class="text-[12px]  text-[--text-muted] truncate overflow-hidden whitespace-nowrap w-[100px] sm:max-w-[160px] md:max-w-[200px]">
-                                        ${v.gemsDescription || ""}
-                                    </span>
-
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button onclick=handleEditgem('${v.id}') class="hover:bg-[--model-hover] w-10 h-10 rounded-full flex items-center justify-center text-[--text-muted] font-medium">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <div class="relative gemx-wrapper">
-                                    <button onclick="gemxToggleMenu('${v.id}')" class="hover:bg-[--model-hover] w-10 h-10 rounded-full flex items-center justify-center text-[--text-muted] font-medium gemx-menu-btn">
-                                         <i class="fa-solid fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <div id="gemx-menu-${v.id}" class="gemx-dropdown absolute right-0 bottom-full mb-2 w-56 rounded-xl shadow-xl bg-[--bg-main] text-[--text-main] hidden z-10">
-                                        <ul class="py-1 text-sm">
-                                            <li> <a  href="{% url "home" %}" class="flex cursor-pointer items-center gap-2 px-4 py-4 text-[16px] hover:bg-[--model-hover]"><i class="fa-regular fa-comment text-[20px]"></i> New chat </a></li>
-                                            <li > <a onclick='copyGem(${JSON.stringify(v)})' class="flex cursor-pointer items-center gap-2 px-4 py-4 text-[16px] hover:bg-[--model-hover]"><i class="fa-regular fa-copy text-[20px]"></i> Make a copy </a></li>
-                                            <li > <a onclick="handleDeleteGem('${v.id}')" class="flex cursor-pointer items-center gap-2 px-4 py-4 text-[16px] hover:bg-[--model-hover] "><i class="fa-regular fa-trash-can text-[20px]"></i> Delete </a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    });
-                } else {
-                    showGems.innerHTML = `
-                    <div class="rounded-xl p-6 text-center x-gem text-[var(--text-muted)] flex justify-center items-center bg-[var(--your-gems-bg)]">
-                        <i class="fa-regular fa-gem text-xl text-[var(--user-bubble-text)]"></i>
-                        <p class="ml-2 text-lg your-gems-message">The Gems you create will appear here</p>
-                    </div>`;
-                }
-            } catch (err) {
-                console.error("Error fetching gems:", err);
-                showGems.innerHTML = `<p class="text-red-500">Error loading gems</p>`;
-            }
-        }
-
-        async function handleEditgem(id) {
-            const response = await fetch('http://localhost:8080/newGems');
-            const gemsdata = await response.json();
-
-            const gem = gemsdata.find((v) => v.id === id);
-
-            localStorage.setItem('editingGem', JSON.stringify(gem));
-
-            localStorage.removeItem('copiedGem');
-
-            window.location.href = "{% url 'NewGem_yoyo' %}";
-        }
-
-
-        fetchGemsData();
-
-
-
-        function gemxToggleMenu(id) {
-
-            const targetMenu = document.getElementById(`gemx-menu-${id}`);
-
-            const isVisible = !targetMenu.classList.contains("hidden");
-
-            // Hide all other open menus
-
-            document.querySelectorAll('.gemx-dropdown').forEach(menu => {
-
-                menu.classList.add("hidden");
-
-            });
-
-            // Toggle visibility of clicked one
-
-            if (!isVisible) {
-
-                targetMenu.classList.remove("hidden");
-
-            }
-
-        }
-
-        // Close dropdowns when clicking outside
-
-        document.addEventListener("click", function (event) {
-
-            const clickedInsideDropdown = event.target.closest('.gemx-dropdown');
-
-            const clickedMenuButton = event.target.closest('.gemx-menu-btn');
-
-            if (!clickedInsideDropdown && !clickedMenuButton) {
-
-                document.querySelectorAll('.gemx-dropdown').forEach(menu => {
-
-                    menu.classList.add("hidden");
-
-                });
-
-            }
-
-        });
-
-
-
-        let currentDeleteId = null;
-
-        const handleDeleteGem = (id) => {
-            currentDeleteId = id;
-            const gemDeleteModal = document.getElementById('gemDeleteModal');
-            if (gemDeleteModal) {
-                gemDeleteModal.classList.remove('hidden');
-
-                const confirmDeleteBtn = document.getElementById('confirm-delete-gem');
-                if (confirmDeleteBtn) {
-
-                    confirmDeleteBtn.replaceWith(confirmDeleteBtn.cloneNode(true));
-                    document.getElementById('confirm-delete-gem').addEventListener('click', async () => {
-                        await handleDeleteConfirmed();
-                    });
-                }
-            }
-        };
-
-
-        const handleDeleteConfirmed = async () => {
-            if (!currentDeleteId) return;
-
-            try {
-                const response = await fetch('http://localhost:8080/newGems/' + currentDeleteId, {
-                    method: "DELETE"
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const gemDeleteModal = document.getElementById('gemDeleteModal');
-                if (gemDeleteModal) {
-                    gemDeleteModal.classList.add('hidden');
-                }
-                currentDeleteId = null;
-                await Display();
-            } catch (error) {
-                console.error("Error deleting info:", error);
-
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const cancelDeleteGem = document.getElementById('cancel-delete-gem');
-            if (cancelDeleteGem) {
-                cancelDeleteGem.addEventListener('click', () => {
-                    gemDeleteModal.classList.add('hidden');
-                });
-            }
-        })
-
-
-        function copyGem(selectedGem) {
-            const copiedGem = { ...selectedGem };
-            delete copiedGem.id;
-
-            localStorage.setItem('editingGem', JSON.stringify(copiedGem));
-            localStorage.setItem('copiedGem', 'true');
-            window.location.href = "{% url 'NewGem_yoyo' %}";
-        }
-    </script>
 
 
 

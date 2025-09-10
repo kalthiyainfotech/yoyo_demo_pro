@@ -558,3 +558,12 @@ def delete_gem(request, gem_id):
         return JsonResponse({"success": True})
 
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+def chat_page(request, gem_id):
+    gem = get_object_or_404(Gem, id=gem_id, user=request.session.get("user_id"))
+    chats = gem.chats.all().order_by("-created_at")
+
+    return render(request, "chat_page.html", {
+        "gem": gem,
+        "chats": chats,
+    })
