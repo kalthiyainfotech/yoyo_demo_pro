@@ -1611,7 +1611,7 @@ main {
 .chat-dropdown {
     position: absolute;
     right: 10px;
-    top: 32px;
+    top: 25px;
     background: #1e1e1e;
     border: 1px solid #333;
     border-radius: 6px;
@@ -1634,3 +1634,7 @@ main {
 .hidden {
     display: none;
 }
+
+
+
+

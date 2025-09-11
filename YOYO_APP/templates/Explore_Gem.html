@@ -498,9 +498,9 @@
                 </div>
             </div>
         </div>
-        <div class="gemini-data ">
-            <div class="main-chat-area">
-                <div class="chat-content-wrapper" style="background-color: var(--bg-main);">
+        <div class="gemini-data overflow-visible">
+            <div class="main-chat-area  overflow-visible">
+                <div class="chat-content-wrapper  overflow-visible" style="background-color: var(--bg-main);">
                     <div class="max-w-4xl mx-auto px-6 py-10 ">
 
 
@@ -704,9 +704,15 @@
 
                                             <!-- Actions -->
                                             <div class="chat-actions relative">
-                                                <span class="chat-menu cursor-pointer" onclick="toggleMenu(this)">⋮</span>
+                                                <span class="chat-menu cursor-pointer"  onclick="startRenameGem(this, '{{ gem.id }}')"><i class="bi bi-pen"></i></span>
+                                                <span class="chat-menu cursor-pointer text-xl" onclick="toggleMenu(this)">⋮</span>
                                                 <div class="chat-dropdown hidden absolute right-0 mt-2 w-28 bg-[--bg-hover] border border-[--border-color] rounded shadow">
-                                                    <div class="px-3 py-1 hover:bg-[--border-color] cursor-pointer" onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
+                                                    <a href="{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}"
+                                                        class="block px-3 py-1 hover:bg-[--border-color] cursor-pointer">
+                                                        New Chat
+                                                    </a>
+                                                    <div class="px-3 py-1 hover:bg-[--border-color] cursor-pointer" onclick="copyGem('{{ gem.id }}')">Copy</div>
+
                                                     <div class="px-3 py-1 hover:bg-[--border-color] cursor-pointer" onclick="deleteGem('{{ gem.id }}')">Delete</div>
                                                 </div>
                                             </div>
@@ -969,6 +975,54 @@
 
     </script>
 
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function copyGem(gemId) {
+    fetch(`/copy_gem/${gemId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "Content-Type": "application/json",
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showCopyModal("Success", "Gem copied successfully!");
+            location.reload()
+        } else {
+            showCopyModal("Failed", "Failed to copy: " + data.error);
+        }
+    })
+    .catch(err => {
+        showCopyModal("Error", "Something went wrong: " + err);
+    });
+}
+
+function showCopyModal(title, message) {
+    document.getElementById("copyModalTitle").innerText = title;
+    document.getElementById("copyModalMessage").innerText = message;
+    document.getElementById("copyModal").classList.remove("hidden");
+}
+
+function closeCopyModal() {
+    document.getElementById("copyModal").classList.add("hidden");
+}
+</script>
 
 
 
@@ -983,3 +1037,8 @@
 </body>
 
 </html>
+{% comment %} 
+Search
+SavedInfo
+forget password
+Explore-Gemini {% endcomment %}

@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import check_password
 import os ,json
 from bardapi import Bard
 from django.http import JsonResponse
+from django.db import transaction
 os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
 
 
@@ -465,6 +466,49 @@ def Explore_Gem_yoyo(request):
         "recent_chats": recent_chats,
         "story_gems": story_gems,
     })
+    
+def copy_gem(request, gem_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid request method"})
+
+    if not request.session.get("user_id"):
+        return JsonResponse({"success": False, "error": "Not logged in"})
+
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    gem = get_object_or_404(Gem, id=gem_id, user=user)
+
+    try:
+        with transaction.atomic():
+            # ✅ Copy Gem (only safe fields)
+            new_gem = Gem.objects.create(
+                user=user,
+                name=f"{gem.name} (Copy)",
+                # 👉 add extra fields here if your model has them
+            )
+
+            # ✅ Copy Chats
+            for chat in gem.chats.all():   # if no related_name, use gem.chat_set.all()
+                new_chat = Chat.objects.create(
+                    user=user,
+                    gem=new_gem,
+                    title=chat.title,
+                    # 👉 add other fields if your Chat model has them
+                )
+
+                # ✅ Copy Messages
+                for msg in chat.messages.all():  # if no related_name, use chat.message_set.all()
+                    Message.objects.create(
+                        chat=new_chat,
+                        sender=msg.sender,
+                        content=msg.content,
+                        # don’t set created_at if auto_now_add=True
+                    )
+
+        return JsonResponse({"success": True, "new_gem_id": new_gem.id})
+
+    except Exception as e:
+        print("COPY ERROR:", e)  # shows error in Django console
+        return JsonResponse({"success": False, "error": str(e)})
     
 def rename_chat(request, chat_id):
     if request.method == "POST":
