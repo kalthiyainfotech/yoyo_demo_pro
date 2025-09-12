@@ -4,10 +4,16 @@ class UserData(models.Model):
     name = models.CharField(max_length=50)
     email = models.EmailField(max_length=50,unique=True)
     password = models.CharField(max_length=50)
+    last_login = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
     
     def __str__(self):
         return self.name
+    
+    def get_email_field_name(self):
+        return "email"
+    
 class Gem(models.Model):
     user = models.ForeignKey("UserData", on_delete=models.CASCADE, related_name="gems")
     name = models.CharField(max_length=100)

@@ -8,6 +8,13 @@ import os ,json
 from bardapi import Bard
 from django.http import JsonResponse
 from django.db import transaction
+from datetime import date, timedelta
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.conf import settings
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
 os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
 
 
@@ -295,8 +302,61 @@ def Explore_Gem_yoyo(request):
         "story_gems": story_gems,
     })
 
+
+token_generator = PasswordResetTokenGenerator()
 def ForgotPassword_yoyo(request):
     return render(request,"ForgotPassword.html")
+
+def ForgotPassword_yoyo(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        try:
+            user = UserData.objects.get(email=email)
+            uid = urlsafe_base64_encode(force_bytes(user.id))
+            token = token_generator.make_token(user)
+
+            reset_link = request.build_absolute_uri(
+                f"/reset-password/{uid}/{token}/"
+            )
+
+            # Send reset email
+            send_mail(
+                subject="Password Reset Request – YOYO",
+                message=f"Hi {user.name},\n\nClick the link below to reset your password:\n{reset_link}\n\nIf you didn't request this, you can ignore this email.",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+            )
+
+            messages.success(request, "Password reset link sent to your email.")
+            return redirect("login")
+        except UserData.DoesNotExist:
+            messages.error(request, "Email not found.")
+    
+    return render(request, "ForgotPassword.html")
+
+# Step 2: Reset Password
+def ResetPassword_yoyo(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = UserData.objects.get(id=uid)
+    except (TypeError, ValueError, OverflowError, UserData.DoesNotExist):
+        user = None
+
+    if user is not None and token_generator.check_token(user, token):
+        if request.method == "POST":
+            password = request.POST.get("password")
+            confirm_password = request.POST.get("confirm_password")
+            if password != confirm_password:
+                messages.error(request, "Passwords do not match.")
+            else:
+                user.password = make_password(password)
+                user.save()
+                messages.success(request, "Password reset successful! Please login.")
+                return redirect("login")
+        return render(request, "ResetPassword.html", {"validlink": True})
+    else:
+        messages.error(request, "Invalid or expired link.")
+        return render(request, "ResetPassword.html", {"validlink": False})
 
 def Learning_coach_yoyo(request):
     if not request.session.get("user_id"):
@@ -404,15 +464,11 @@ def Search_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-
-    # Get recent chats (excluding gem-specific chats)
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
     
-    # Get story gems
+
     story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
-    
-    # Date context for template
-    from datetime import date, timedelta
+   
     today = date.today()
     yesterday = today - timedelta(days=1)
     
@@ -487,35 +543,35 @@ def copy_gem(request, gem_id):
 
     try:
         with transaction.atomic():
-            # ✅ Copy Gem (only safe fields)
+            
             new_gem = Gem.objects.create(
                 user=user,
                 name=f"{gem.name} (Copy)",
-                # 👉 add extra fields here if your model has them
+                
             )
 
-            # ✅ Copy Chats
-            for chat in gem.chats.all():   # if no related_name, use gem.chat_set.all()
+         
+            for chat in gem.chats.all():   
                 new_chat = Chat.objects.create(
                     user=user,
                     gem=new_gem,
                     title=chat.title,
-                    # 👉 add other fields if your Chat model has them
+                 
                 )
 
-                # ✅ Copy Messages
-                for msg in chat.messages.all():  # if no related_name, use chat.message_set.all()
+              
+                for msg in chat.messages.all():  
                     Message.objects.create(
                         chat=new_chat,
                         sender=msg.sender,
                         content=msg.content,
-                        # don’t set created_at if auto_now_add=True
+                        
                     )
 
         return JsonResponse({"success": True, "new_gem_id": new_gem.id, "new_gem_name": new_gem.name})
 
     except Exception as e:
-        print("COPY ERROR:", e)  # shows error in Django console
+        print("COPY ERROR:", e)
         return JsonResponse({"success": False, "error": str(e)})
     
 def rename_chat(request, chat_id):

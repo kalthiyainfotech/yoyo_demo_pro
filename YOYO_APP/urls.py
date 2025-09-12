@@ -32,6 +32,7 @@ urlpatterns = [
    path("gem/<int:gem_id>/delete/", delete_gem, name="delete_gem"),
    path("chat/<int:gem_id>/", chat_page, name="chat_page"),
    path("copy_gem/<int:gem_id>/", copy_gem, name="copy_gem"),
+   path("reset-password/<uidb64>/<token>/", ResetPassword_yoyo, name="reset_password"),
 
 
 ]
