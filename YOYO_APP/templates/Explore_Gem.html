@@ -752,6 +752,19 @@
     </div>
     <!-- ---------------------------------------------- -->
 
+    <!-- ---------------------------------------------- -->
+    <!-- Copy Success Modal -->
+    <div id="copyModal"
+        class="bg-[--form-theme] pt-5 lg:w-[30%] md:w-[60%] sm:w-[80%] w-[90%] px-8 pb-6 rounded-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 fixed hidden z-50 rounded-2xl shadow-lg">
+        <h3 id="copyModalTitle" class="text-[--text-main] text-2xl mb-9 ">Success</h3>
+        <p id="copyModalMessage" class="text-[--text-muted] text-[14px]">Gem copied successfully!</p>
+        <div class="flex justify-end mt-8">
+            <button onclick="closeCopyModal()"
+                class="text-[--input-border-focus] text-md hover:bg-[--examples-btn-hover] py-2 px-3 rounded-3xl font-semibold">OK</button>
+        </div>
+    </div>
+    <!-- ---------------------------------------------- -->
+
     <!------------------------------------------------->
     <!-- Help Center -->
     <div id="help_Data"
@@ -1003,7 +1016,8 @@ function copyGem(gemId) {
     .then(data => {
         if (data.success) {
             showCopyModal("Success", "Gem copied successfully!");
-            location.reload()
+            // Add the new gem to the UI dynamically
+            addGemToUI(data.new_gem_name || "Copied Gem", data.new_gem_id);
         } else {
             showCopyModal("Failed", "Failed to copy: " + data.error);
         }
@@ -1022,6 +1036,79 @@ function showCopyModal(title, message) {
 function closeCopyModal() {
     document.getElementById("copyModal").classList.add("hidden");
 }
+
+// Dynamic UI update functions - make globally available
+window.addGemToUI = function(gemName, gemId) {
+    // Add to sidebar Story Book section
+    const storyGemsList = document.getElementById('story-gems');
+    if (storyGemsList) {
+        const newGemItem = document.createElement('li');
+        newGemItem.className = 'chat-item';
+        newGemItem.setAttribute('data-gem-id', gemId);
+        newGemItem.innerHTML = `
+            <span class="chat-title" onclick="window.location.href='/new_chat/?gem_id=${gemId}'">
+                ${gemName}
+            </span>
+            <div class="chat-actions">
+                <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
+                <div class="chat-dropdown hidden">
+                    <div onclick="startRenameGem(this, '${gemId}')">Rename</div>
+                    <div onclick="deleteGem('${gemId}')">Delete</div>
+                </div>
+            </div>
+        `;
+        storyGemsList.appendChild(newGemItem);
+    }
+
+    // Add to main Your Gems section
+    const showGemsContainer = document.getElementById('showGems');
+    if (showGemsContainer) {
+        const newGemCard = document.createElement('div');
+        newGemCard.className = 'chat-item group p-4 rounded-lg shadow bg-[--bg-hover] hover:bg-[--border-color] transition flex items-center justify-between';
+        newGemCard.setAttribute('data-gem-id', gemId);
+        newGemCard.innerHTML = `
+            <span class="chat-title cursor-pointer" 
+                onclick="window.location.href='/new_chat/?gem_id=${gemId}'">
+                ${gemName}
+            </span>
+            <div class="chat-actions relative">
+                <span class="chat-menu cursor-pointer" onclick="startRenameGem(this, '${gemId}')"><i class="bi bi-pen"></i></span>
+                <span class="chat-menu cursor-pointer text-xl" onclick="toggleMenu(this)">⋮</span>
+                <div class="chat-dropdown hidden absolute right-0 mt-2 w-28 bg-[--bg-hover] border border-[--border-color] rounded shadow">
+                    <a href="/new_chat/?gem_id=${gemId}"
+                        class="block px-3 py-1 hover:bg-[--border-color] cursor-pointer">
+                        New Chat
+                    </a>
+                    <div class="px-3 py-1 hover:bg-[--border-color] cursor-pointer" onclick="copyGem('${gemId}')">Copy</div>
+                    <div class="px-3 py-1 hover:bg-[--border-color] cursor-pointer" onclick="deleteGem('${gemId}')">Delete</div>
+                </div>
+            </div>
+        `;
+        showGemsContainer.appendChild(newGemCard);
+    }
+}
+
+// Make removeGemFromUI globally available
+window.removeGemFromUI = function(gemId) {
+    // Remove from sidebar Story Book section
+    const storyGemItem = document.querySelector(`#story-gems li[data-gem-id="${gemId}"]`);
+    if (storyGemItem) {
+        storyGemItem.remove();
+    }
+
+    // Remove from main Your Gems section
+    const gemCard = document.querySelector(`#showGems .chat-item[data-gem-id="${gemId}"]`);
+    if (gemCard) {
+        gemCard.remove();
+    }
+
+    // Check if no gems left and show message
+    const showGemsContainer = document.getElementById('showGems');
+    if (showGemsContainer && showGemsContainer.children.length === 0) {
+        showGemsContainer.innerHTML = '<p class="text-gray-500">No gems found.</p>';
+    }
+}
+
 </script>
 
 
@@ -1034,11 +1121,65 @@ function closeCopyModal() {
     <script src="{% static "JS/dropdown.js" %}"></script>
     <!-- <script src="./JS/Gemini.js"></script> -->
 
+    <!-- Override deleteGem function after dropdown.js is loaded -->
+    <script>
+    // Override the deleteGem function from dropdown.js to use our custom modal and dynamic updates
+    function deleteGem(gemId) {
+        // Show confirmation modal
+        document.getElementById('gemDeleteModal').classList.remove('hidden');
+        
+        // Store the gem ID for deletion
+        document.getElementById('confirm-delete-gem').setAttribute('data-gem-id', gemId);
+    }
+
+    // Handle delete confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmDeleteBtn = document.getElementById('confirm-delete-gem');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-gem');
+        const deleteModal = document.getElementById('gemDeleteModal');
+        
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', function() {
+                const gemId = this.getAttribute('data-gem-id');
+                if (gemId) {
+                    // Make delete request
+                    fetch(`/gem/${gemId}/delete/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCookie("csrftoken"),
+                            "Content-Type": "application/json",
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove from UI
+                            removeGemFromUI(gemId);
+                            // Close modal
+                            deleteModal.classList.add('hidden');
+                        } else {
+                            alert('Failed to delete gem: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(err => {
+                        alert('Error deleting gem: ' + err);
+                    });
+                }
+            });
+        }
+        
+        if (cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', function() {
+                deleteModal.classList.add('hidden');
+            });
+        }
+    });
+    </script>
+
 </body>
 
 </html>
 {% comment %} 
-Search
 SavedInfo
 forget password
-Explore-Gemini {% endcomment %}
+{% endcomment %}

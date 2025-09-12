@@ -405,15 +405,23 @@ def Search_yoyo(request):
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
 
-    
+    # Get recent chats (excluding gem-specific chats)
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
-
     
+    # Get story gems
     story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
+    
+    # Date context for template
+    from datetime import date, timedelta
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    
     return render(request,"Search.html",{
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "today": today,
+        "yesterday": yesterday,
     })
 
 def Upgrad_yoyo(request):
@@ -504,7 +512,7 @@ def copy_gem(request, gem_id):
                         # don’t set created_at if auto_now_add=True
                     )
 
-        return JsonResponse({"success": True, "new_gem_id": new_gem.id})
+        return JsonResponse({"success": True, "new_gem_id": new_gem.id, "new_gem_name": new_gem.name})
 
     except Exception as e:
         print("COPY ERROR:", e)  # shows error in Django console

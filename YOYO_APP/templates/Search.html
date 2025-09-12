@@ -131,7 +131,7 @@
                             </h3>
                             <ul id="story-gems">
                                 {% for gem in story_gems %}
-                                    <li class="chat-item" data-gem-id="{{ gem.id }}">
+                                    <li data-gem-id="{{ gem.id }}">
                                         <!-- Gem Title only -->
                                         <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
                                             {{ gem.name }}
@@ -361,41 +361,27 @@
                         <div class="max-w-xl mx-auto">
                             <h2 class="text-base font-medium mb-4" id="recentTitle">Recent</h2>
                             <ul id="chatList">
-                                <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item"
-                                    data-chat-id="chat-123456">
-                                    <span>HTML and JavaScript Code Request</span>
-                                    <span class="chat-date">Today</span>
-                                </li>
-                                <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item"
-                                    data-chat-id="chat-123456">
-                                    <span>Fix Chat History Duplication Issue</span>
-                                    <span class="chat-date">Yesterday</span>
-                                </li>
-                                <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item"
-                                    data-chat-id="chat-123456">
-                                    <span>Clarification Needed: What's on Your Mind?</span>
-                                    <span class="chat-date">Yesterday</span>
-                                </li>
-                                <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item"
-                                    data-chat-id="chat-123456">
-                                    <span>HTML Code Review and Analysis</span>
-                                    <span class="chat-date">Yesterday</span>
-                                </li>
-                                <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item"
-                                    data-chat-id="chat-123456">
-                                    <span>Webpage Responsiveness: Techniques Explained</span>
-                                    <span class="chat-date">Jun 14</span>
-                                </li>
-                                <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item"
-                                    data-chat-id="chat-123456">
-                                    <span>Unclear Request, Need Clarification</span>
-                                    <span class="chat-date">Jun 14</span>
-                                </li>
-                                <li class="flex justify-between py-4 px-4 rounded cursor-pointer hover-bg"
-                                    data-chat-id="chat-123456">
-                                    <span>Assistance Offered, Briefly Asked</span>
-                                    <span class="chat-date">Jun 12</span>
-                                </li>
+                                {% for chat in recent_chats %}
+                                    <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item hover:bg-[-bg-hover] transition-colors"
+                                        data-chat-id="{{ chat.id }}"
+                                        onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                        <span class="truncate">{{ chat.title }}</span>
+                                        <span class="chat-date text-sm text-gray-500 ml-2 whitespace-nowrap">
+                                            {% if chat.created_at.date == today %}
+                                                Today
+                                            {% elif chat.created_at.date == yesterday %}
+                                                Yesterday
+                                            {% else %}
+                                                {{ chat.created_at|date:"M d" }}
+                                            {% endif %}
+                                        </span>
+                                    </li>
+                                {% empty %}
+                                    <li class="py-8 text-center text-gray-500">
+                                        <p>No recent chats found</p>
+                                        <p class="text-sm mt-2">Start a new conversation to see it here</p>
+                                    </li>
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>
@@ -649,46 +635,8 @@
             }
         }
 
-        // Load and render chat history from localStorage
-        function renderChatHistory() {
-            const chatData = JSON.parse(localStorage.getItem('chatData')) || { chats: [] };
-
-            // Sort chats by timestamp (newest first)
-            const sortedChats = [...chatData.chats].sort((a, b) => b.timestamp - a.timestamp);
-
-            // Clear existing list
-            chatList.innerHTML = '';
-
-            // Add each chat to the list
-            sortedChats.forEach(chat => {
-                const li = document.createElement('li');
-                li.className = 'flex justify-between py-4 px-4 rounded cursor-pointer chat-item';
-                li.dataset.chatId = chat.id;
-
-                li.innerHTML = `
-            <span>${chat.title || 'Untitled Chat'}</span>
-            <span class="chat-date">${formatChatDate(chat.timestamp)}</span>
-        `;
-
-                // In Search.html
-                li.addEventListener('click', function () {
-                    // Clear any previous flags
-                    localStorage.removeItem('chatToOpen');
-                    localStorage.removeItem('specificChatToOpen');
-
-                    // Set flags for the specific chat
-                    localStorage.setItem('specificChatToOpen', chat.id);
-                    localStorage.setItem('animateHistory', 'true'); // New flag for history animation
-
-                    // Navigate to chat page
-                    window.location.href = "{% url 'home' %}";
-                });
-
-                chatList.appendChild(li);
-            });
-        }
-
-        renderChatHistory();
+        // The chat list is now rendered dynamically from the server
+        // No need to load from localStorage as we're using server-side data
 
         // Filter chat list based on input
         input.addEventListener('input', () => {
@@ -705,50 +653,11 @@
             sectionTitle.style.display = query.length > 0 && !anyVisible ? 'none' : '';
         });
 
+        // Initialize search functionality when DOM is loaded
         document.addEventListener('DOMContentLoaded', function () {
-            const chatData = JSON.parse(localStorage.getItem('chatData')) || { chats: [] };
-            const chatList = document.getElementById('chatList');
-
-            // Clear existing items
-            chatList.innerHTML = '';
-
-            // Add each chat to the list
-            chatData.chats.forEach(chat => {
-                const li = document.createElement('li');
-                li.className = 'flex justify-between py-4 px-4 rounded cursor-pointer chat-item';
-                li.dataset.chatId = chat.id;
-
-                li.innerHTML = `
-            <span>${chat.title || 'Untitled Chat'}</span>
-            <span class="chat-date">${formatChatDate(chat.timestamp)}</span>
-        `;
-
-                // In Search.html
-                li.addEventListener('click', function () {
-                    // Clear any previous flags
-                    localStorage.removeItem('chatToOpen');
-                    localStorage.removeItem('specificChatToOpen');
-
-                    // Set flags for the specific chat
-                    localStorage.setItem('specificChatToOpen', chat.id);
-                    localStorage.setItem('animateHistory', 'true'); // New flag for history animation
-
-                    // Navigate to chat page
-                    window.location.href = "{% url 'home' %}";
-                });
-
-                chatList.appendChild(li);
-            });
-
-            function formatChatDate(timestamp) {
-                const date = new Date(timestamp);
-                const now = new Date();
-                const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-
-                if (diffDays === 0) return 'Today';
-                if (diffDays === 1) return 'Yesterday';
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
+            // The chat list is already rendered from the server template
+            // Just initialize the search functionality
+            console.log('Search page loaded with dynamic chat data');
         });
     </script>
 
