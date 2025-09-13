@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect ,get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from .forms import RegisterForm
-from .models import UserData,Message,Chat,Gem
+from .models import UserData,Message,Chat,Gem,SavedInfo
 from django.contrib.auth.hashers import check_password
 import os ,json
 from bardapi import Bard
@@ -453,11 +453,131 @@ def SavedInfo_yoyo(request):
 
     
     story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
+    
+    # Get saved info for the user
+    saved_infos = SavedInfo.objects.filter(user=user).order_by("-created_at")
+    
+    # Convert to JSON for JavaScript
+    saved_infos_json = json.dumps([
+        {
+            'id': info.id,
+            'info_text': info.info_text,
+            'created_at': info.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        for info in saved_infos
+    ])
+    
     return render(request,"SavedInfo.html",{
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "saved_infos": saved_infos_json,
     })
+
+def save_info(request):
+    if not request.session.get("user_id"):
+        return JsonResponse({"success": False, "message": "User not authenticated"})
+    
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            info_text = data.get("info_text", "").strip()
+            
+            if not info_text:
+                return JsonResponse({"success": False, "message": "Info text cannot be empty"})
+            
+            user = get_object_or_404(UserData, id=request.session["user_id"])
+            
+            # Create new saved info
+            saved_info = SavedInfo.objects.create(
+                user=user,
+                info_text=info_text
+            )
+            
+            return JsonResponse({
+                "success": True, 
+                "message": "Info saved successfully",
+                "saved_info": {
+                    "id": saved_info.id,
+                    "info_text": saved_info.info_text,
+                    "created_at": saved_info.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                }
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON data"})
+        except Exception as e:
+            return JsonResponse({"success": False, "message": f"Error saving info: {str(e)}"})
+    
+    return JsonResponse({"success": False, "message": "Invalid request method"})
+
+def delete_saved_info(request, info_id):
+    if not request.session.get("user_id"):
+        return JsonResponse({"success": False, "message": "User not authenticated"})
+    
+    if request.method == "DELETE":
+        try:
+            user = get_object_or_404(UserData, id=request.session["user_id"])
+            saved_info = get_object_or_404(SavedInfo, id=info_id, user=user)
+            saved_info.delete()
+            
+            return JsonResponse({"success": True, "message": "Info deleted successfully"})
+            
+        except Exception as e:
+            return JsonResponse({"success": False, "message": f"Error deleting info: {str(e)}"})
+    
+    return JsonResponse({"success": False, "message": "Invalid request method"})
+
+def delete_all_saved_info(request):
+    if not request.session.get("user_id"):
+        return JsonResponse({"success": False, "message": "User not authenticated"})
+    
+    if request.method == "DELETE":
+        try:
+            user = get_object_or_404(UserData, id=request.session["user_id"])
+            SavedInfo.objects.filter(user=user).delete()
+            
+            return JsonResponse({"success": True, "message": "All info deleted successfully"})
+            
+        except Exception as e:
+            return JsonResponse({"success": False, "message": f"Error deleting all info: {str(e)}"})
+    
+    return JsonResponse({"success": False, "message": "Invalid request method"})
+
+def update_saved_info(request, info_id):
+    if not request.session.get("user_id"):
+        return JsonResponse({"success": False, "message": "User not authenticated"})
+    
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+            info_text = data.get("info_text", "").strip()
+            
+            if not info_text:
+                return JsonResponse({"success": False, "message": "Info text cannot be empty"})
+            
+            user = get_object_or_404(UserData, id=request.session["user_id"])
+            saved_info = get_object_or_404(SavedInfo, id=info_id, user=user)
+            
+            saved_info.info_text = info_text
+            saved_info.save()
+            
+            return JsonResponse({
+                "success": True, 
+                "message": "Info updated successfully",
+                "saved_info": {
+                    "id": saved_info.id,
+                    "info_text": saved_info.info_text,
+                    "created_at": saved_info.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                }
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON data"})
+        except Exception as e:
+            return JsonResponse({"success": False, "message": f"Error updating info: {str(e)}"})
+    
+    return JsonResponse({"success": False, "message": "Invalid request method"})
 
 def Search_yoyo(request):
     if not request.session.get("user_id"):

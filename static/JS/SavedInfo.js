@@ -13,6 +13,22 @@ const geminitool = document.getElementById('gemini-tool');
 const geminitoolShow = document.getElementById('gemini-tool-show');
 let updateID = null;
 
+// Function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 textareaMessage.addEventListener('input', function () {
     submitBtn.disabled = textareaMessage.value.trim() === '';
 });
@@ -57,19 +73,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    const deleteModal = document.getElementById('deleteModal');
+    const savedInfoDeleteModal = document.getElementById('savedInfoDeleteModal');
     const deleteAllModal = document.getElementById('deleteAllModal');
-    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
-    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const cancelSavedInfoDeleteBtn = document.getElementById('cancel-saved-info-delete-btn');
+    const confirmSavedInfoDeleteBtn = document.getElementById('confirm-saved-info-delete-btn');
     const confirmDeleteAll = document.getElementById('confirm-delete-all');
     const cancelDeleteAll = document.getElementById('cancel-delete-all');
 
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', () => {
-            deleteModal.classList.add('hidden');
+    if (cancelSavedInfoDeleteBtn) {
+        cancelSavedInfoDeleteBtn.addEventListener('click', () => {
+            savedInfoDeleteModal.classList.add('hidden');
         });
     }
 
+    if (confirmSavedInfoDeleteBtn) {
+        confirmSavedInfoDeleteBtn.addEventListener('click', () => {
+            handleDeleteConfirmed();
+        });
+    }
 
     if (cancelDeleteAll) {
         cancelDeleteAll.addEventListener('click', () => {
@@ -79,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (confirmDeleteAll) {
         confirmDeleteAll.addEventListener('click', () => {
-
+            handleDeleteAllinfo();
         });
     }
 
@@ -100,26 +121,27 @@ const handleSaveInfo = async (event) => {
         return;
     }
 
-    const data = { message };
-    const url = "http://localhost:8080/savedInfo";
+    const data = { info_text: message };
 
     try {
         let response;
         if (updateID) {
-
-            response = await fetch(`${url}/${updateID}`, {
+            // Update existing info
+            response = await fetch(`/update-saved-info/${updateID}/`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie('csrftoken')
                 },
-                body: JSON.stringify({ ...data, id: updateID }),
+                body: JSON.stringify(data),
             });
         } else {
-
-            response = await fetch(url, {
+            // Create new info
+            response = await fetch("/save-info/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie('csrftoken')
                 },
                 body: JSON.stringify(data),
             });
@@ -129,15 +151,18 @@ const handleSaveInfo = async (event) => {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-
-        textareaMessage.value = '';
-        updateID = null;
-        await Display();
-        saveinfoForm.classList.add('hidden');
+        const result = await response.json();
+        if (result.success) {
+            textareaMessage.value = '';
+            updateID = null;
+            // Refresh the page to show updated data
+            window.location.reload();
+        } else {
+            console.error("Error saving/updating info:", result.message);
+        }
 
     } catch (error) {
         console.error("Error saving/updating info:", error);
-
     }
 };
 
@@ -145,10 +170,9 @@ const Display = async (event) => {
     if (event) event.preventDefault();
 
     try {
-        const response = await fetch("http://localhost:8080/savedInfo");
-        const data = await response.json();
-
-        const savedInfoData = data.reverse();
+        // Get saved info data from the template (passed from Django view)
+        const savedInfoData = typeof window.savedInfos === 'string' ? JSON.parse(window.savedInfos) : (window.savedInfos || []);
+        
         let deleteAllButtonHtml = savedInfoData.length > 0 ?
             `<button id="deleteall-info" onclick="handleDeleteall()"
                 class="text-[--input-border-focus] border flex justify-center gap-2 text-md hover:bg-[--examples-btn-hover] py-2 items-center px-5 rounded-3xl font-semibold">
@@ -176,7 +200,7 @@ const Display = async (event) => {
 
             print += `
                 <div class="saveshowdata bg-[--sidebar-bg] w-full py-3 px-4 mb-1 flex items-center justify-between ${borderRadius}">
-                    <p class="break-words text-md text-[--sidebar-text]">${v.message}</p>
+                    <p class="break-words text-md text-[--sidebar-text]">${v.info_text}</p>
                     <div class="relative">
                         <span id="action-ED-${index}" onClick="handleActionBtn(${index})"
                             class="action material-symbols-outlined rounded-full hover:bg-[--bg-hover] w-[40px] h-[40px] items-center justify-center flex cursor-pointer">more_vert</span>
@@ -200,7 +224,6 @@ const Display = async (event) => {
 
     } catch (error) {
         console.error(error);
-
     }
 };
 
@@ -240,57 +263,62 @@ const handleDeleteall = () => {
     const deleteAllModal = document.getElementById('deleteAllModal');
     if (deleteAllModal) {
         deleteAllModal.classList.remove('hidden');
-
-        const confirmDeleteAll = document.getElementById('confirm-delete-all');
-        if (confirmDeleteAll) {
-
-            confirmDeleteAll.replaceWith(confirmDeleteAll.cloneNode(true));
-            document.getElementById('confirm-delete-all').addEventListener('click', async () => {
-                await handleDeleteAllinfo();
-            });
-        }
     }
 };
 
 const handleDeleteAllinfo = async () => {
-
     try {
-        const response = await fetch('http://localhost:8080/savedInfo')
-        const data = await response.json()
+        // Show loading state
+        const confirmBtn = document.getElementById('confirm-delete-all');
+        const originalText = confirmBtn.textContent;
+        confirmBtn.textContent = 'Deleting...';
+        confirmBtn.disabled = true;
 
-        for (const item of data) {
-            if (item.id) {
-                await fetch('http://localhost:8080/savedInfo/' + item.id, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
+        const response = await fetch('/delete-all-saved-info/', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
             }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        await Display();
+
+        const result = await response.json();
+        if (result.success) {
+            // Refresh the page to show updated data
+            window.location.reload();
+        } else {
+            console.error("Error deleting all info:", result.message);
+            alert("Error: " + result.message);
+        }
     } catch (error) {
-        console.error(error);
+        console.error("Error deleting all info:", error);
+        alert("Error deleting all info. Please try again.");
+    } finally {
+        // Reset button state
+        const confirmBtn = document.getElementById('confirm-delete-all');
+        if (confirmBtn) {
+            confirmBtn.textContent = 'Delete all';
+            confirmBtn.disabled = false;
+        }
     }
 }
 
 const handleEdit = async (id) => {
     try {
-
         document.querySelectorAll('[id^="action-data-"]').forEach(drop => {
             drop.classList.add("hidden");
         });
 
-        const response = await fetch('http://localhost:8080/savedInfo');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        const obj = data.find((v) => v.id === id);
+        // Get data from the already loaded savedInfos
+        const savedInfoData = typeof window.savedInfos === 'string' ? JSON.parse(window.savedInfos) : (window.savedInfos || []);
+        const obj = savedInfoData.find((v) => v.id == id);
 
         if (obj) {
-            textareaMessage.value = obj.message;
+            textareaMessage.value = obj.info_text;
             updateID = obj.id;
             saveinfoForm.classList.remove('hidden');
             textareaMessage.focus();
@@ -299,7 +327,6 @@ const handleEdit = async (id) => {
         }
     } catch (error) {
         console.error("Error fetching info for edit:", error);
-
     }
 };
 
@@ -307,18 +334,9 @@ let currentDeleteId = null;
 
 const handleDelete = (id) => {
     currentDeleteId = id;
-    const deleteModal = document.getElementById('deleteModal');
-    if (deleteModal) {
-        deleteModal.classList.remove('hidden');
-
-        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-        if (confirmDeleteBtn) {
-
-            confirmDeleteBtn.replaceWith(confirmDeleteBtn.cloneNode(true));
-            document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-                await handleDeleteConfirmed();
-            });
-        }
+    const savedInfoDeleteModal = document.getElementById('savedInfoDeleteModal');
+    if (savedInfoDeleteModal) {
+        savedInfoDeleteModal.classList.remove('hidden');
     }
 };
 
@@ -327,23 +345,47 @@ const handleDeleteConfirmed = async () => {
     if (!currentDeleteId) return;
 
     try {
-        const response = await fetch('http://localhost:8080/savedInfo/' + currentDeleteId, {
-            method: "DELETE"
+        // Show loading state
+        const confirmBtn = document.getElementById('confirm-saved-info-delete-btn');
+        const originalText = confirmBtn.textContent;
+        confirmBtn.textContent = 'Deleting...';
+        confirmBtn.disabled = true;
+
+        const response = await fetch('/delete-saved-info/' + currentDeleteId + '/', {
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
         });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const deleteModal = document.getElementById('deleteModal');
-        if (deleteModal) {
-            deleteModal.classList.add('hidden');
+        const result = await response.json();
+        if (result.success) {
+            const savedInfoDeleteModal = document.getElementById('savedInfoDeleteModal');
+            if (savedInfoDeleteModal) {
+                savedInfoDeleteModal.classList.add('hidden');
+            }
+            currentDeleteId = null;
+            // Refresh the page to show updated data
+            window.location.reload();
+        } else {
+            console.error("Error deleting info:", result.message);
+            alert("Error: " + result.message);
         }
-        currentDeleteId = null;
-        await Display();
     } catch (error) {
         console.error("Error deleting info:", error);
-
+        alert("Error deleting info. Please try again.");
+    } finally {
+        // Reset button state
+        const confirmBtn = document.getElementById('confirm-saved-info-delete-btn');
+        if (confirmBtn) {
+            confirmBtn.textContent = 'Delete';
+            confirmBtn.disabled = false;
+        }
     }
 }
 

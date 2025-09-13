@@ -43,3 +43,12 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender}: {self.text[:20]}"
+
+class SavedInfo(models.Model):
+    user = models.ForeignKey(UserData, on_delete=models.CASCADE, related_name="saved_infos")
+    info_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.name}: {self.info_text[:50]}..."

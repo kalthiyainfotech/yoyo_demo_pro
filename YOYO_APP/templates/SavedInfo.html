@@ -346,14 +346,19 @@
 
                         <textarea id="message"
                             class="w-full mt-8 font-semibold bg-[--input-bg] h-64 p-3 border text-lg text-[--textarea-text]  border-[--border-color]-300 rounded-xl focus:outline-none focus:ring focus:border-[--input-border-focus] focus:ring-[--input-border-focus] resize-none textarea"
-                            name="textarea" placeholder="For example, “I prefer short, concise responses”"></textarea>
+                            name="textarea" placeholder="For example, "I prefer short, concise responses""></textarea>
 
                         <div class="flex gap-2 justify-end mt-8">
                             <button id="saveform-cancle" type="reset"
                                 class=" text-[--input-border-focus] text-md hover:bg-[--examples-btn-hover] py-2 px-3 rounded-3xl ">Cancel</button>
                             <button id="submitBtn" type="submit"
-                                class=" bg-[--add-btn] text-[--add-btn-text] px-6 py-2 rounded-3xl disabled:bg-[--add-diseble-btn] disabled:text-[--add-diseble-btn-text] "
-                                disabled>Submit</button>
+                                class=" bg-[--add-btn] text-[--add-btn-text] px-6 py-2 rounded-3xl disabled:bg-[--add-diseble-btn] disabled:text-[--add-diseble-btn-text] flex items-center gap-2"
+                                disabled>
+                                <span id="submit-text">Submit</span>
+                                <div id="submit-loader" class="hidden">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                </div>
+                            </button>
                         </div>
 
                     </form>
@@ -381,36 +386,36 @@
                     </form>
 
 
-                    <div id="deleteModal"
-                        class="bg-[--form-theme] pt-5 lg:w-[40%] md:w-[60%] sm:w-[80%] w-[90%] px-8 pb-6 rounded-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute hidden z-50 rounded-2xl shadow-lg">
+                    <div id="savedInfoDeleteModal"
+                        class="bg-[--form-theme] pt-5 lg:w-[40%] md:w-[60%] sm:w-[80%] w-[90%] px-4 sm:px-8 pb-6 rounded-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute hidden z-50 rounded-2xl shadow-lg">
                         <div class="flex justify-between items-center mb-8">
-                            <h3 class="text-[--text-main] text-2xl">Delete info?</h3>
+                            <h3 class="text-[--text-main] text-xl sm:text-2xl">Delete info?</h3>
                         </div>
 
-                        <div class="flex justify-end mt-8">
-                            <button id="cancel-delete-btn"
-                                class="text-[--input-border-focus] text-md hover:bg-[--examples-btn-hover] py-2 px-3 rounded-3xl font-semibold">Cancel</button>
-                            <button id="confirm-delete-btn"
-                                class="text-[--input-border-focus] text-md hover:bg-[--examples-btn-hover] py-2 px-3 rounded-3xl font-semibold">Delete</button>
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-2 justify-end mt-8">
+                            <button id="cancel-saved-info-delete-btn"
+                                class="text-[--input-border-focus] text-sm sm:text-md hover:bg-[--examples-btn-hover] py-2 px-4 sm:px-3 rounded-3xl font-semibold w-full sm:w-auto">Cancel</button>
+                            <button id="confirm-saved-info-delete-btn"
+                                class="text-[--input-border-focus] text-sm sm:text-md hover:bg-[--examples-btn-hover] py-2 px-4 sm:px-3 rounded-3xl font-semibold w-full sm:w-auto">Delete</button>
                         </div>
                     </div>
 
                     <div id="deleteAllModal"
-                        class="bg-[--form-theme] pt-5 lg:w-[40%] md:w-[60%] sm:w-[80%] w-[90%] px-8 pb-6 rounded-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute hidden z-50 rounded-2xl shadow-lg">
+                        class="bg-[--form-theme] pt-5 lg:w-[40%] md:w-[60%] sm:w-[80%] w-[90%] px-4 sm:px-8 pb-6 rounded-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute hidden z-50 rounded-2xl shadow-lg">
                         <div class="flex justify-between items-center mb-8">
-                            <h3 class="text-[--text-main] text-2xl">Delete info?</h3>
+                            <h3 class="text-[--text-main] text-xl sm:text-2xl">Delete info?</h3>
                         </div>
-                        <p class="text-[--sidebar-text] mb-4">Everything YOYO has saved about you and your
+                        <p class="text-[--sidebar-text] mb-4 text-sm sm:text-base">Everything YOYO has saved about you and your
                             preferences
                             will be permanently deleted. You can still ask YOYO to save new info, unless you turn
                             off
                             this feature.</p>
-                        <div class="flex justify-end mt-8">
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-2 justify-end mt-8">
                             <button id="confirm-delete-all"
-                                class="text-[--input-border-focus] text-md hover:bg-[--examples-btn-hover] py-2 px-3 rounded-3xl font-semibold">Delete
+                                class="text-[--input-border-focus] text-sm sm:text-md hover:bg-[--examples-btn-hover] py-2 px-4 sm:px-3 rounded-3xl font-semibold w-full sm:w-auto">Delete
                                 all</button>
                             <button id="cancel-delete-all"
-                                class="text-[--input-border-focus] text-md hover:bg-[--examples-btn-hover] py-2 px-3 rounded-3xl font-semibold">Cancel</button>
+                                class="text-[--input-border-focus] text-sm sm:text-md hover:bg-[--examples-btn-hover] py-2 px-4 sm:px-3 rounded-3xl font-semibold w-full sm:w-auto">Cancel</button>
 
                         </div>
                     </div>
@@ -642,10 +647,14 @@
 
     </script>
 
+    <script>
+        // Pass saved_infos data to JavaScript
+        window.savedInfos = {{ saved_infos|safe }};
+    </script>
     <script src="{% static "JS/SavedInfo.js" %}"></script>
     <script src="{% static "JS/index.js" %}"></script>
     <script src="{% static "JS/dropdown.js" %}"></script>
-    <!-- <script src="./JS/Gemini.js"></script> -->
+    
 </body>
 
 </html>
