@@ -885,3 +885,805 @@
 </body>
 
 </html>
+
+
+
+{% comment %} Search Page  {% endcomment %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static "css/Yoyo.css" %}">
+    <link rel="icon" href="{% static "img/favicon.ico" %}" type="image/x-icon" />
+    <title>Chat Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --bg-main: #ffffff;
+            --bg-hover: #f5f5f5;
+            --text-main: #1f1f1f;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --card-bg: #f4f4f5;
+        }
+
+        body.dark {
+            --bg-main: #1b1c1d;
+            --bg-hover: #2e2e2e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-color: #444444;
+            --card-bg: #2e2e2e;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .search-input {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-item:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .hover-bg:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .chat-date {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-item span:first-child {
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center transition-colors duration-300">
+
+    <div class="w-[100%]">
+        <div class="backdrop" id="backdrop"></div>
+
+        <div class="flex w-[100%] ">
+            <div class="main-content" id="main-content">
+                <div class="main-scroll-area">
+                    <div class="main-inner">
+                        <div class="main-inner-left">
+                            <button id="openBtn">☰</button>
+                            <span class="expand">Expand menu</span>
+                            <span class="collapse">Collapse menu</span>
+                        </div>
+
+                        <div class="main-inner-right">
+                            <a href="{% url "Search_yoyo" %}" class="flex items-center justify-center" id="search-icon"> <span
+                                    class="material-icons">search</span> </a>
+                            <span class="search-span">Search</span>
+                        </div>
+                    </div>
+
+                    <div class="drawer" id="drawer">
+                        <ul class="drawer-data ">
+                            <li id="new-chat-button">
+                                <a href="{% url "home" %}" class="items-center flex gap-5"> <span
+                                        class="material-symbols-outlined">edit_square</span>
+                                    <span>New Chat</span>
+                                </a>
+                                <span class="new-chat">New Chat</span>
+                            </li>
+                            <li class="diamond">
+                                <a href="{% url "Explore_Gem_yoyo" %}" class="w-[100%] items-center flex gap-5"> <span
+                                        class="material-symbols-outlined">diamond </span>
+                                    <span>Explore Gems</span>
+                                </a>
+                                <span class="expore">Explore Gems</span>
+                            </li>
+                        </ul>
+
+                        <div class="recent-section">
+                            <h3 class="flex gap-2 items-center">
+                                <span class="text-[#00b0b6] rounded-full bg-[#004144] flex justify-center items-center px-2 py-1">
+                                    <i class="bi bi-book-half"></i>
+                                </span>
+                                Story Book
+                            </h3>
+                            <ul id="story-gems">
+                                {% for gem in story_gems %}
+                                    <li data-gem-id="{{ gem.id }}">
+                                        <!-- Gem Title only -->
+                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                            {{ gem.name }}
+                                        </span>
+
+                                        <!-- Actions -->
+                                        <div class="chat-actions">
+                                            <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
+                                            <div class="chat-dropdown hidden">
+                                                <div onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
+                                                <div onclick="deleteGem('{{ gem.id }}')">Delete</div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% empty %}
+                                    <li>No gems yet</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <!-- Delete Confirmation Modal -->
+                        <div id="deleteModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                        <div class="bg-black p-6 rounded-xl shadow-lg w-80">
+                            <h2 class="text-lg font-semibold mb-4">Confirm Delete</h2>
+                            <p class="mb-6">Are you sure you want to delete this Chat?</p>
+                            <div class="flex justify-end gap-3">
+                            <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 rounded-lg text-black">Cancel</button>
+                            <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
+                            </div>
+                        </div>
+                        </div>
+
+
+                        
+                        
+
+                        <div class="recent-section">
+                            <h3>Recent</h3>
+                            <ul id="recent-chats">
+                                {% for chat in recent_chats %}
+                                    <li class="chat-item" data-chat-id="{{ chat.id }}">
+                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                            {{ chat.title }}
+                                        </span>
+                                        <div class="chat-actions">
+                                            <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
+                                            <div class="chat-dropdown hidden">
+                                                <div onclick="startRename(this, '{{ chat.id }}')">Rename</div>
+                                                <div onclick="deleteChat('{{ chat.id }}')">Delete</div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% empty %}
+                                    <li>No recent chats</li>
+                                {% endfor %}
+                            </ul>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-help" id="setting-help">
+                    <ul class="drawer-data">
+                        <li class="dropdown-toggle " onclick="toggleDropdown()">
+                            <a class="material-symbols-outlined">settings</a>
+                            <span>Setting & Help</span>
+                            <span class="seting-span">Setting & Help</span>
+                        </li>
+                        <div class="dropdown-menu" id="dropdownMenu">
+                            <ul class="pb-2">
+                                <li>
+                                    <a href="{% url "SavedInfo_yoyo" %}" class="w-[100%] items-center flex gap-5">
+                                        <span class="material-symbols-outlined"> person </span>
+                                        Saved info
+                                    </a>
+
+                                </li>
+                                <li>
+                                    <a href="{% url "Public_Links_yoyo" %}" class="w-[100%] items-center flex gap-5">
+                                        <span class="material-symbols-outlined"> link </span>
+                                        Your public links
+                                    </a>
+                                </li>
+                                <li class="submenu flex justify-between" id="themeOptions">
+                                    <div class="flex gap-[20px]">
+                                        <span class="material-symbols-outlined">light_mode</span>
+                                        Theme
+                                    </div>
+                                    <i class="fa-solid fa-caret-right pe-3 text-base"></i>
+                                    <ul class="theme-options">
+                                        <li data-theme="system">System</li>
+                                        <li data-theme="light">Light</li>
+                                        <li data-theme="dark">Dark</li>
+                                    </ul>
+                                </li>
+
+                                <li id="feedback_open">
+                                    <span class="material-symbols-outlined"> feedback</span>
+                                    Send feedback
+                                </li>
+                                <li id="open_help_center">
+                                    <span class="material-symbols-outlined"> quiz </span>
+                                    Help
+                                </li>
+                            </ul>
+
+                            <div class="location-info">
+                                <div>Nana Varachha, Surat, Gujarat, India</div>
+                                <div><a href="#">From your IP address</a> • <a href="#">Update location</a></div>
+                            </div>
+                        </div>
+                    </ul>
+                </div>
+
+            </div>
+            <div class="z-10 gemini-header p-2 flex items-center justify-between">
+                <div class="relative ">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+                    <div class="pl-48px">
+                        <h1 class="text-2xl " style="color: var(--text-main);">YOYO</h1>
+                        <div class="relative">
+                            <button id="model-toggle"
+                                class="mt-1 rounded-full flex items-center justify-center w-[100px] h-6 font-medium text-sm "
+                                style="background-color: var(--sidebar-bg); color: var(--sidebar-text);">
+                                <span class="pl-2 font-semibold">2.5 Flash</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                                    fill="currentColor">
+                                    <path d="M0 0h24v24H0V0z" fill="none" />
+                                    <path d="M7 10l5 5 5-5H7z" />
+                                </svg>
+                            </button>
+
+                            <div id="model-dropdown"
+                                class="absolute left-[10%] -translate-x-1/2 top-full mt-1 w-[315px] sm:max-w-xs rounded-xl shadow-lg z-50 py-2"
+                                style="background-color: var(--dropdown-bg); border-color: var(--dropdown-border); color: var(--dropdown-text);">
+                                <div class="px-4 py-2 text-sm font-medium" style="color: var(--text-muted);">Choose your
+                                    model</div>
+
+                                <!-- Option 1 - Default selected -->
+                                <div class="option flex justify-between items-center px-5 py-2 cursor-pointer hover:bg-[var(--dropdown-hover)] selected"
+                                    style="color: var(--dropdown-text);" onclick="selectOption(this)">
+                                    <div class="justify-between items-center">
+                                        <span class="text-xs font-semibold">2.5 Flash</span>
+                                        <div class="text-xs mt-0">Fast all-around help</div>
+                                    </div>
+                                    <i class="fa-regular fa-circle-check"></i>
+                                </div>
+
+                                <!-- Option 2 -->
+                                <div class="option flex justify-between items-center px-5 py-2 cursor-pointer hover:bg-[var(--dropdown-hover)] selected"
+                                    style="color: var(--dropdown-text);" onclick="selectOption(this)">
+                                    <div class="justify-between items-center">
+                                        <span class="text-xs font-semibold">2.5 Pro (preview)</span>
+                                        <div class="text-xs">Reasoning, math & code</div>
+                                    </div>
+                                    <i class="fa-regular fa-circle-check hidden"></i>
+                                </div>
+
+                                <!-- Option 3 -->
+                                <div class="option flex justify-between items-center px-5 py-2 cursor-pointer hover:bg-[var(--dropdown-hover)] selected"
+                                    style="color: var(--dropdown-text);" onclick="selectOption(this)">
+                                    <div class="justify-between items-center">
+                                        <span class="text-xs font-semibold">Personalization (preview)</span>
+                                        <div class="text-xs">Based on your Search history </div>
+                                    </div>
+                                    <i class="fa-regular fa-circle-check hidden"></i>
+                                </div>
+
+                                <div class="px-5 pb-3 justify-center flex items-center">
+                                    <div class="cursor-pointer">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs font-semibold"
+                                                style="color: var(--dropdown-text);">Upgrade
+                                                to YOYO AI
+                                                Pro</span>
+                                        </div>
+                                        <div class="text-xs">Get our most capable models &
+                                            features</div>
+                                    </div>
+                                    <div class="pl-5">
+                                        <a href="{% url "Public_Links_yoyo" %}"
+                                            class="h-9 rounded-full justify-center flex items-center text-sm  w-[100px]"
+                                            style="background-color: var(--sidebar-hover); color: var(--accent-blue);">
+                                            Upgrade
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2 items-center">
+                    <a href="{% url "Upgrad_yoyo" %}"
+                        class="h-9 block cursor-pointer rounded-md flex items-center justify-center text-xs font-semibold px-6 mr-3"
+                        style="background-color: var(--sidebar-hover);">
+                        <img rel="" src="{% static "img/favicon.png" %}" class="w-[20px] me-2" />
+                        Upgrade
+                    </a>
+                    <div id="account">
+                        <div class="relative">
+                            <div class="relative group inline-block">
+                                <!-- Profile button -->
+                                <button id="profile-button"
+                                    class="w-8 h-8 bg-[#78909c] rounded-full flex items-center justify-center text-white font-medium">
+                                    {{ user.name|first|upper }}
+                                </button>
+
+                                <!-- Hover tooltip -->
+                                <div id="account-tooltips"
+                                    class="absolute z-[999] right-0 mt-1 min-w-56 p-2 bg-[#3c4043e6] hidden group-hover:block rounded">
+                                    <h5 class="text-[13px] text-[#E8EAED] font-medium m-0">Google Account</h5>
+                                    <p class="text-[13px] text-[#9AA0A6] font-medium m-0">{{ user.name }}</p>
+                                    <p class="text-[13px] text-[#9AA0A6] font-medium m-0">{{ user.email }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown -->
+                            <div id="profile-dropdown"
+                                class="absolute right-4 top-14 w-[400px] max-w-[90vw] sm:max-w-md rounded-3xl shadow-xl z-50 overflow-hidden"
+                                style="background-color: var(--dropdown-bg); color: var(--dropdown-text);">
+
+                                <!-- Header -->
+                                <div class="px-4 pt-5 pb-2 text-center text-sm font-medium" style="color: var(--dropdown-text);">
+                                    {{ user.email }}
+                                </div>
+
+                                <!-- Avatar + Welcome -->
+                                <div class="px-4 py-4 flex flex-col items-center">
+                                    <div class="relative">
+                                        <div id="profile-circle"
+                                            class="w-[75px] h-[75px] bg-[#78909c] rounded-full flex items-center justify-center text-white text-4xl font-medium mb-2 overflow-hidden cursor-pointer">
+                                            {{ user.name|first|upper }}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center mt-2">
+                                        <div class="font-medium text-base sm:text-xl mb-3">Hi, {{ user.name }}</div>
+                                        <a href="" 
+                                            class="text-sm mt-2 py-2 font-semibold border rounded-full px-5"
+                                            style="color: var(--accent-blue); border-color: var(--border-color);">
+                                            Manage your Google Account
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Other Accounts -->
+                                {% if other_accounts %}
+                                <div class="flex flex-col gap-1 mt-3 mb-3 m-3">
+                                    <button id="toggleAccountsBtn"
+                                        class="w-full flex justify-between items-center px-4 py-4 bg-[--bg-main] hover:bg-[--account-hover] transition rounded-t-3xl rounded-b-3xl">
+                                        <span id="toggleText" class="text-base sm:text-lg">Show more accounts</span>
+                                        <i id="iconExpand" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+                                    </button>
+
+                                    <div id="accountList" class="hidden flex flex-col gap-1">
+                                        {% for acc in other_accounts %}
+                                        <div onclick="window.location.href=''"
+                                            class="flex items-center gap-3 p-4 h-[60px] sm:p-3 cursor-pointer bg-[--bg-main] hover:bg-[--sidebar-hover]">
+                                            <div class="w-[36px] h-[36px] bg-[#78909c] text-white flex items-center justify-center rounded-full font-semibold text-lg">
+                                                {{ acc.name|first|upper }}
+                                            </div>
+                                            <div class="text-left truncate overflow-hidden w-[175px] sm:w-auto">
+                                                <div class="text-sm font-medium text-[var(--text-main)]">{{ acc.name }}</div>
+                                                <div class="text-xs text-[var(--text-muted)] truncate overflow-hidden whitespace-nowrap">{{ acc.email }}</div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+
+                                        <!-- Add Account -->
+                                        <div onclick="window.location.href='{% url 'login' %}'"
+                                            class="px-4 h-[60px] py-4 flex items-center text-sm justify-start bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
+                                            <div class="w-6 h-6 rounded-full flex items-center justify-center mr-2"
+                                                style="background-color: var(--sidebar-hover);">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </div>
+                                            Add account
+                                        </div>
+
+                                        <!-- Sign Out -->
+                                        <div onclick="window.location.href='{% url 'logout_yoyo' %}'"
+                                            class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-b-3xl bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960"
+                                                class="mr-2" width="24px" fill="currentColor">
+                                                <path
+                                                    d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z" />
+                                            </svg>
+                                            Sign out of all accounts
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <!-- If no other accounts -->
+                                <div class="flex justify-center items-center gap-[2px] px-4">
+                                    <div onclick="window.location.href='{% url 'login' %}'"
+                                        class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-s-full bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer w-[50%]">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2"
+                                            style="background-color: var(--sidebar-hover);">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </div>
+                                        Add account
+                                    </div>
+                                    <div onclick="window.location.href='{% url 'logout_yoyo' %}'"
+                                        class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-e-full bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer w-[50%]">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2"
+                                            style="background-color: var(--sidebar-hover);">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" role="img" aria-labelledby="logoutOutlineTitle logoutOutlineDesc">
+                                                <title id="logoutOutlineTitle">Sign out</title>
+                                                <desc id="logoutOutlineDesc">Arrow pointing right leaving a door — sign out icon</desc>
+                                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M16 17l5-5-5-5"/>
+                                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M21 12H9"/>
+                                            </svg>
+
+                                        </div>
+                                        Sign Out
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Footer -->
+                                <div class="px-4 py-4 flex justify-center items-center text-xs text-[--text-muted]">
+                                    <a href="#" class="mr-1 rounded-md p-2 hover:bg-[var(--sidebar-hover)]">Privacy Policy</a>
+                                    <span class="text-[5px]"> ● </span>
+                                    <a href="#" class="ml-1 rounded-md p-2 hover:bg-[var(--sidebar-hover)]">Terms of Service</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="gemini-data ">
+            <div class="main-chat-area">
+                <div class="chat-content-wrapper contents" style="background-color: var(--bg-main);">
+                    <div class="w-full max-w-2xl p-6">
+
+                        <!-- Header -->
+                        <h1 class="text-2xl font-semibold mb-6 ml-4">Search</h1>
+
+                        <!-- Search Input -->
+                        <div class="relative w-full max-w-xl mx-auto mb-8">
+                            <input type="text" placeholder="Search for chats"
+                                class="w-full rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors search-input"
+                                id="searchInput" />
+                            <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+                                xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                                viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0
+        1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11
+        0 5.5 5.5 0 0 1 11 0z" />
+                            </svg>
+                        </div>
+
+                        <!-- Recent Chats -->
+                        <div class="max-w-xl mx-auto">
+                            <h2 class="text-base font-medium mb-4" id="recentTitle">Recent</h2>
+                            <ul id="chatList">
+                                {% for chat in recent_chats %}
+                                    <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item hover:bg-[-bg-hover] transition-colors"
+                                        data-chat-id="{{ chat.id }}"
+                                        onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                        <span class="truncate">{{ chat.title }}</span>
+                                        <span class="chat-date text-sm text-gray-500 ml-2 whitespace-nowrap">
+                                            {% if chat.created_at.date == today %}
+                                                Today
+                                            {% elif chat.created_at.date == yesterday %}
+                                                Yesterday
+                                            {% else %}
+                                                {{ chat.created_at|date:"M d" }}
+                                            {% endif %}
+                                        </span>
+                                    </li>
+                                {% empty %}
+                                    <li class="py-8 text-center text-gray-500">
+                                        <p>No recent chats found</p>
+                                        <p class="text-sm mt-2">Start a new conversation to see it here</p>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!------------------------------------------------->
+    <!-- Help Center -->
+    <div id="help_Data"
+        class="flex flex-col hidden  justify-start fixed top-[100px] rounded-2xl right-[10px] bg-[--bg-main] shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)]  lg:w-[23%] md:w-[40%] sm:w-[50%] w-[90%] h-[70vh] overflow-y-auto">
+
+        <!-- Sticky Header -->
+        <div class="sticky top-0 left-0 py-3 pb-8 w-full flex items-center justify-between bg-[--bg-main] z-10">
+            <p class="text-2xl text-[--text-main] text-center w-full">Help</p>
+            <button id="help_close" class="absolute right-4 top-3">
+                <i class="fa-solid fa-xmark text-2xl text-[--text-main]"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="text-[--text-main] space-y-3 pb-4 text-left">
+            <h6 class="text-[16px] text-[--text-main] ps-4">Popular help resources</h6>
+
+
+            <div class="flex items-center gap-3 hover:bg-[--dropdown-hover] py-2 px-4 cursor-pointer">
+                <div
+                    class="w-[40px] h-[40px] min-h-[40px] min-w-[40px] rounded-full bg-[--examples-btn-hover]  flex justify-center items-center ">
+                    <i class="fa-regular fa-file-lines text-[--add-btn]"></i>
+                </div>
+                <span class="text-[16px] text-[--text-main]">Manage & delete your YOYO Apps activity</span>
+            </div>
+            <div class="flex items-center gap-3 hover:bg-[--dropdown-hover] py-2 px-4 cursor-pointer">
+                <div
+                    class="w-[40px] h-[40px] min-h-[40px] min-w-[40px] rounded-full bg-[--examples-btn-hover] flex justify-center items-center">
+                    <i class="fa-regular fa-file-lines text-[--add-btn]"></i>
+                </div>
+                <span class="text-[16px] text-[--text-main]">Use YOYO Apps</span>
+            </div>
+            <div class="flex items-center gap-3 hover:bg-[--dropdown-hover] py-2 px-4 cursor-pointer">
+                <div
+                    class="w-[40px] h-[40px] min-h-[40px] min-w-[40px] rounded-full bg-[--examples-btn-hover] flex justify-center items-center">
+                    <i class="fa-regular fa-file-lines text-[--add-btn]"></i>
+                </div>
+                <span class="text-[16px] text-[--text-main]">Use & manage apps in YOYO</span>
+            </div>
+            <div class="flex items-center gap-3 hover:bg-[--dropdown-hover] py-2 px-4 cursor-pointer">
+                <div
+                    class="w-[40px] h-[40px] min-h-[40px] min-w-[40px] rounded-full bg-[--examples-btn-hover] flex justify-center items-center">
+                    <i class="fa-regular fa-file-lines text-[--add-btn]"></i>
+                </div>
+                <span class="text-[16px] text-[--text-main]">Find & manage your recent chats in YOYO Apps</span>
+            </div>
+            <div class="flex items-center gap-3 hover:bg-[--dropdown-hover] py-2 px-4 cursor-pointer">
+                <div
+                    class="w-[40px] h-[40px] min-h-[40px] min-w-[40px] rounded-full bg-[--examples-btn-hover] flex justify-center items-center">
+                    <i class="fa-regular fa-file-lines text-[--add-btn]"></i>
+                </div>
+                <span class="text-[16px] text-[--text-main]">Where you can use the YOYO web app</span>
+            </div>
+
+
+            <a href="" class="text-[14px] text-[--add-btn] w-full block hover:bg-[--bg-hover] py-4 px-10">Visit help
+                forum <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+
+            <div class="bg-[--dropdown-hover] py-3 mx-5 rounded-full flex items-center px-5 cursor-pointer">
+                <i class="fa-solid fa-magnifying-glass me-3"></i>
+                <input type="search" class="w-full bg-transparent outline-none border-0 cursor-pointer">
+            </div>
+
+            <div class="py-4 border-t-[8px] border-b-[8px] border-[--border-color]-500">
+                <p class="text-[--text-main] ps-4">Need more help?</p>
+                <div class="flex items-center gap-3 hover:bg-[--dropdown-hover] py-2 px-4 mt-3  cursor-pointer">
+                    <div
+                        class="w-[40px] h-[40px] min-h-[40px] min-w-[40px] rounded-full bg-[--examples-btn-hover] flex justify-center items-center">
+                        <i class="fa-solid fa-message text-[--add-btn]"></i>
+                    </div>
+                    <div>
+                        <p class="text-[--text-main] text-[16px]">Ask the Help Community</p>
+                        <span class="text-[--text-muted] text-[16px]">Get answers from community experts</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="flex items-center gap-3 hover:bg-[--dropdown-hover] py-2 px-4 mt-3  cursor-pointer">
+                <div
+                    class="w-[40px] h-[40px] min-h-[40px] min-w-[40px] rounded-full bg-[--examples-btn-hover] flex justify-center items-center">
+                    <i class="fa-solid fa-circle-exclamation text-[--add-btn]"></i>
+                </div>
+                <p class="text-[16px] text-[--add-btn] font-medium">Report a problem</p>
+            </div>
+        </div>
+    </div>
+    <!-- *****help js***** -->
+    <script>
+        const help_Data = document.getElementById('help_Data');
+        const help_close = document.getElementById('help_close');
+        const open_help_center = document.getElementById('open_help_center');
+
+
+
+        open_help_center.addEventListener('click', () =>
+            help_Data.classList.remove('hidden')
+        );
+        help_close.addEventListener('click', () =>
+            help_Data.classList.add('hidden')
+        );
+    </script>
+    <!---------------------------------------------->
+    <!---------------------------------------------->
+    <!-- ************Feedback********* -->
+
+    <div id="feedback-data"
+        class="flex z-50 flex-col hidden justify-between fixed top-0 right-0 rounded-l-2xl bg-[#1F1F1F] shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] lg:w-[28%] md:w-[40%] sm:w-[50%] w-[90%] h-[100vh] overflow-hidden">
+
+        <!-- Sticky Header -->
+        <div
+            class="sticky top-0 left-0 py-5 px-4 w-full flex items-center justify-between bg-[#1F1F1F] shadow-[0_1px_4px_rgba(0,0,0,0.6)] z-10">
+            <p class="text-lg text-white w-full">Send feedback to YOYO</p>
+            <button id="feedback_close"
+                class="absolute right-4 w-[50px] h-[50px] rounded-full top-3 hover:bg-[#303134]">
+                <i class="fa-solid fa-xmark text-2xl text-white"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content + Bottom -->
+        <div class="flex flex-col justify-between h-full overflow-y-auto">
+            <div class="space-y-3 text-white p-4 text-left">
+                <h6 class="text-[14px]">Describe your feedback (required)</h6>
+
+                <textarea name="feedback_message" id="feedback_message"
+                    placeholder="Tell us what prompted this feedback..." rows="4"
+                    class="w-full bg-transparent border rounded p-2 outline-none focus:ring-2 focus:ring-[#8AB4F8] focus:border-0 text-[16px] text-white"></textarea>
+
+
+                <span class="text-[12px]">Please don’t include any sensitive information <i
+                        class="fa-regular fa-circle-question"></i></span>
+
+                <p class="text-[16px]">A screenshot will help us better understand your feedback.</p>
+
+                <div
+                    class="w-full border text-center text-[#7cacf8] rounded-md py-2 hover:border-[#7cacf8] hover:bg-[#2A3039] cursor-pointer">
+                    <p class="text-[15px]"><i class="fa-solid fa-desktop"></i> Capture screenshot</p>
+                </div>
+            </div>
+
+            <!-- Fixed Bottom Section -->
+            <div class="mt-auto  bg-[#1F1F1F] ">
+                <div class="flex items-center gap-2 mb-4 px-4">
+                    <input type="checkbox" name="checkbox" id="checkbox"
+                        class="w-5 h-5 bg-[#1F1F1F] accent-[#7CACF8] cursor-pointer border rounded" />
+                    <label for="checkbox" class="text-white cursor-pointer">
+                        We may email you for more information or updates
+                    </label>
+                </div>
+
+                <p class="text-[14px] text-white mb-4 px-4">
+                    Some account and system information may be sent to YOYO. We will use it to fix problems and
+                    improve
+                    our services, subject to our Privacy Policy and Terms of Service. We may email you for more
+                    information
+                    or updates. Go to Legal Help to ask for content changes for legal reasons.
+                </p>
+
+                <div class="text-end shadow-[0_-4px_6px_rgba(0,0,0,0.15)] mt-2 p-4">
+                    <button id="sendBtn" disabled class="bg-[#373737] py-2 px-6 rounded-lg text-white text-[16px]">
+                        Send
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- feedback js -->
+    <script>
+        const feedback_message = document.getElementById("feedback_message");
+        const sendBtn = document.getElementById("sendBtn");
+        const feedback_close = document.getElementById("feedback_close");
+        const feedback_open = document.getElementById("feedback_open");
+        const feedback_data = document.getElementById("feedback-data");
+
+        feedback_open.addEventListener('click', () =>
+            feedback_data.classList.remove('hidden')
+        );
+        feedback_close.addEventListener('click', () =>
+            feedback_data.classList.add('hidden')
+        );
+
+        feedback_message.addEventListener("input", function () {
+            if (feedback_message.value.trim().length > 0) {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove("bg-[#373737]", "text-white");
+                sendBtn.classList.add("bg-[#7CACF8]", "text-[#062E6F]");
+            } else {
+                sendBtn.disabled = true;
+                sendBtn.classList.remove("bg-[#7CACF8]", "text-[#062E6F]");
+                sendBtn.classList.add("bg-[#373737]", "text-white");
+            }
+        });
+    </script>
+    <!---------------------------------------------->
+
+    
+    <script>
+        const toggleBtn = document.getElementById("toggleAccountsBtn");
+        const accountList = document.getElementById("accountList");
+        const toggleText = document.getElementById("toggleText");
+        const iconExpand = document.getElementById("iconExpand");
+
+        toggleBtn.addEventListener("click", () => {
+            const isVisible = !accountList.classList.contains("hidden");
+            accountList.classList.toggle("hidden");
+
+            // Update text and icon
+            toggleText.textContent = isVisible ? "Show more accounts" : "Hide more accounts";
+            iconExpand.classList.toggle("rotate-180", !isVisible);
+
+            // Toggle bottom radius of the button
+            if (!isVisible) {
+                toggleBtn.classList.remove("rounded-b-3xl");
+            } else {
+                toggleBtn.classList.add("rounded-b-3xl");
+            }
+        });
+
+    </script>
+
+    <!-- Theme Script -->
+    <script>
+        // const toggleBtn = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const input = document.getElementById('searchInput');
+        const chatList = document.getElementById('chatList');
+        const sectionTitle = document.getElementById('recentTitle');
+
+        // Format date as "Today", "Yesterday", or "MMM DD"
+        function formatChatDate(timestamp) {
+            const now = new Date();
+            const date = new Date(timestamp);
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                return 'Today';
+            } else if (diffDays === 1) {
+                return 'Yesterday';
+            } else {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+        }
+
+        // The chat list is now rendered dynamically from the server
+        // No need to load from localStorage as we're using server-side data
+
+        // Filter chat list based on input
+        input.addEventListener('input', () => {
+            const query = input.value.toLowerCase().trim();
+            let anyVisible = false;
+
+            [...chatList.children].forEach(item => {
+                const text = item.querySelector('span:first-child').textContent.toLowerCase();
+                const match = text.includes(query);
+                item.style.display = match ? 'flex' : 'none';
+                if (match) anyVisible = true;
+            });
+
+            sectionTitle.style.display = query.length > 0 && !anyVisible ? 'none' : '';
+        });
+
+        // Initialize search functionality when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            // The chat list is already rendered from the server template
+            // Just initialize the search functionality
+            console.log('Search page loaded with dynamic chat data');
+        });
+    </script>
+
+    <script src="{% static "JS/index.js" %}"></script>
+    <script src="{% static "JS/dropdown.js" %}"></script>
+
+</body>
+
+</html>
