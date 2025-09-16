@@ -428,7 +428,7 @@
                                         </div>
                                     {% endif %}
                                     <div class="text-[10px] opacity-70 mt-1">
-                                        {% if message.sender == 'user' %}{% else %}YOYO{% endif %}
+                                        {% if message.sender == 'user' %}{% else %}{% endif %}
                                     </div>
                                 </div>
                             {% endfor %}
@@ -940,8 +940,33 @@
 
     <script src="{% static "JS/Gemini.js" %}"></script>
     <script src="{% static "JS/dropdown.js" %}"></script>
+    <script src="{% static "JS/index.js" %}"></script>
 
-    
+    <!-- Toggle Accounts Functionality -->
+    <script>
+        const toggleBtn = document.getElementById("toggleAccountsBtn");
+        const accountList = document.getElementById("accountList");
+        const toggleText = document.getElementById("toggleText");
+        const iconExpand = document.getElementById("iconExpand");
+
+        if (toggleBtn && accountList && toggleText && iconExpand) {
+            toggleBtn.addEventListener("click", () => {
+                const isVisible = !accountList.classList.contains("hidden");
+                accountList.classList.toggle("hidden");
+
+                // Update text and icon
+                toggleText.textContent = isVisible ? "Show more accounts" : "Hide more accounts";
+                iconExpand.classList.toggle("rotate-180", !isVisible);
+
+                // Toggle bottom radius of the button
+                if (!isVisible) {
+                    toggleBtn.classList.remove("rounded-b-3xl");
+                } else {
+                    toggleBtn.classList.add("rounded-b-3xl");
+                }
+            });
+        }
+    </script>
 
 </body>
 
