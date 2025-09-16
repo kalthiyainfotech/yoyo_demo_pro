@@ -14,20 +14,68 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.http import HttpResponseForbidden
+from django.urls import reverse
 
 os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
 
 
 
-def register_yoyo(request):
-    if request.session.get("user_id"):
-        return redirect("home")
+def _get_session_accounts(request):
+    """Return list of account dicts in session (may be empty)."""
+    return request.session.get("accounts", [])
 
+def _save_session_accounts(request, accounts):
+    request.session["accounts"] = accounts
+    request.session.modified = True
+
+def _ensure_active_account(request):
+    """Ensure active_account_id exists and points to a valid entry in accounts."""
+    active_id = request.session.get("active_account_id")
+    accounts = _get_session_accounts(request)
+    if active_id and any(int(a["id"]) == int(active_id) for a in accounts):
+        return
+    if accounts:
+        request.session["active_account_id"] = accounts[0]["id"]
+        request.session.modified = True
+
+def _append_account_to_session(request, user):
+    accounts = _get_session_accounts(request)
+    if not any(int(a["id"]) == int(user.id) for a in accounts):
+        accounts.append({"id": int(user.id), "name": user.name, "email": user.email})
+        _save_session_accounts(request, accounts)
+    # make this user the active one
+    request.session["active_account_id"] = int(user.id)
+    request.session.modified = True
+
+def _replace_with_account(request, user):
+    accounts = [{"id": int(user.id), "name": user.name, "email": user.email}]
+    _save_session_accounts(request, accounts)
+    request.session["active_account_id"] = int(user.id)
+    request.session.modified = True
+
+def _get_active_user(request):
+    _ensure_active_account(request)
+    active_id = request.session.get("active_account_id")
+    if not active_id:
+        return None
+    try:
+        return UserData.objects.get(id=active_id)
+    except UserData.DoesNotExist:
+        # remove invalid account id from session and retry
+        accounts = [a for a in _get_session_accounts(request) if int(a["id"]) != int(active_id)]
+        _save_session_accounts(request, accounts)
+        request.session.pop("active_account_id", None)
+        request.session.modified = True
+        return _get_active_user(request)
+
+# ---------- Views ----------
+def register_yoyo(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.password = make_password(form.cleaned_data["password"])  
+            user.password = make_password(form.cleaned_data["password"])
             user.save()
             messages.success(request, "Registration successful! Please login.")
             return redirect("login")
@@ -38,9 +86,6 @@ def register_yoyo(request):
     return render(request, "Register.html", {"form": form})
 
 def login_yoyo(request):
-    if request.session.get("user_id"):
-        return redirect("home")
-
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -48,8 +93,18 @@ def login_yoyo(request):
         try:
             user = UserData.objects.get(email=email)
             if check_password(password, user.password):
+                accounts = request.session.get("accounts", [])
+
+                # avoid duplicates
+                if user.id not in [acc["id"] for acc in accounts]:
+                    accounts.append({"id": user.id, "name": user.name, "email": user.email})
+
+                request.session["accounts"] = accounts
                 request.session["user_id"] = user.id
                 request.session["user_name"] = user.name
+                # set active account for consistency with switch behavior
+                request.session["active_account_id"] = int(user.id)
+
                 messages.success(request, f"Welcome back, {user.name}!")
                 return redirect("home")
             else:
@@ -59,9 +114,50 @@ def login_yoyo(request):
 
     return render(request, "Login.html")
 
+
+
+def switch_account(request, account_id):
+    """Switch active_account_id to one of the accounts already in the session (GET link is fine)."""
+    accounts = _get_session_accounts(request)
+    if any(int(a["id"]) == int(account_id) for a in accounts):
+        # update active account id
+        request.session["active_account_id"] = int(account_id)
+        # also update the session's current user fields so templates/views reflect the switch
+        try:
+            user = UserData.objects.get(id=account_id)
+            request.session["user_id"] = int(user.id)
+            request.session["user_name"] = user.name
+        except UserData.DoesNotExist:
+            pass
+        request.session.modified = True
+        messages.success(request, "Switched account.")
+        next_url = request.GET.get("next") or reverse("home")
+        return redirect(next_url)
+    return HttpResponseForbidden("You cannot switch to that account.")
+
 def logout_yoyo(request):
-    request.session.flush()  
-    return redirect("login")  
+    """
+    If ?all=1 is provided, flush everything (sign out of all accounts).
+    Otherwise, remove the active account and make the first remaining one active (if any).
+    """
+    accounts = _get_session_accounts(request)
+    active_id = request.session.get("active_account_id")
+
+    if request.GET.get("all") == "1" or not accounts:
+        request.session.flush()
+        messages.success(request, "Signed out.")
+        return redirect("login")
+
+    # remove the active account
+    new_accounts = [a for a in accounts if int(a["id"]) != int(active_id)]
+    _save_session_accounts(request, new_accounts)
+    if new_accounts:
+        request.session["active_account_id"] = int(new_accounts[0]["id"])
+    else:
+        request.session.pop("active_account_id", None)
+    request.session.modified = True
+    messages.success(request, "Signed out of current account.")
+    return redirect("login") 
 
 def home_yoyo(request):
     if not request.session.get("user_id"):
@@ -221,18 +317,22 @@ def brain_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
 
-    
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
+
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
-
-    
     story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
 
     return render(request, "Brainstormer.html", {
         "user": user,
+        "other_accounts": other_accounts,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
     })
+
+
 
 def Career_guide_yoyo(request):
     if not request.session.get("user_id"):

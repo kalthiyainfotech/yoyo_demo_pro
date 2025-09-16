@@ -73,7 +73,7 @@
                 </span>
             </a>
         </div>
-        <form id="loginForm" class="space-y-5" method="post" action="{% url 'login' %}">
+        <form id="loginForm" class="space-y-5" method="post" action="{% if request.GET.add == '1' %}{% url 'login' %}?add=1{% else %}{% url 'login' %}{% endif %}">
            <!-- Email Field -->
             {% csrf_token %}
             <div>
