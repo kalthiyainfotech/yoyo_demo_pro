@@ -114,8 +114,6 @@ def login_yoyo(request):
 
     return render(request, "Login.html")
 
-
-
 def switch_account(request, account_id):
     """Switch active_account_id to one of the accounts already in the session (GET link is fine)."""
     accounts = _get_session_accounts(request)
@@ -136,34 +134,25 @@ def switch_account(request, account_id):
     return HttpResponseForbidden("You cannot switch to that account.")
 
 def logout_yoyo(request):
-    """
-    If ?all=1 is provided, flush everything (sign out of all accounts).
-    Otherwise, remove the active account and make the first remaining one active (if any).
-    """
-    accounts = _get_session_accounts(request)
-    active_id = request.session.get("active_account_id")
-
-    if request.GET.get("all") == "1" or not accounts:
-        request.session.flush()
-        messages.success(request, "Signed out.")
-        return redirect("login")
-
-    # remove the active account
-    new_accounts = [a for a in accounts if int(a["id"]) != int(active_id)]
-    _save_session_accounts(request, new_accounts)
-    if new_accounts:
-        request.session["active_account_id"] = int(new_accounts[0]["id"])
-    else:
-        request.session.pop("active_account_id", None)
-    request.session.modified = True
-    messages.success(request, "Signed out of current account.")
+    # Clear the whole session
+    request.session.flush()
+    
+    # Optional: add a message
+    messages.success(request, "Signed out.")
+    
+    # Redirect to login page
     return redirect("login") 
 
 def home_yoyo(request):
     if not request.session.get("user_id"):
         return redirect("login")
+    
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
 
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -175,14 +164,20 @@ def home_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def new_chat(request):
     """Open a blank chat window, linked to a gem if provided"""
     if not request.session.get("user_id"):
         return redirect("login")
+    
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
    
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -212,6 +207,7 @@ def new_chat(request):
         "current_chat": None,
         "messages": [],
         "is_new_chat": True,
+        "other_accounts": other_accounts,
     })
 
 def chat_detail(request, chat_id=None):
@@ -220,6 +216,10 @@ def chat_detail(request, chat_id=None):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     # Recent = chats without gem
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -259,6 +259,7 @@ def chat_detail(request, chat_id=None):
         "is_new_chat": chat is None,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def send_message(request, chat_id=None):
@@ -332,13 +333,15 @@ def brain_yoyo(request):
         "story_gems": story_gems,
     })
 
-
-
 def Career_guide_yoyo(request):
     if not request.session.get("user_id"):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -349,6 +352,7 @@ def Career_guide_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def Chess_champ_yoyo(request):
@@ -356,6 +360,10 @@ def Chess_champ_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -366,6 +374,7 @@ def Chess_champ_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def Coding_partner_yoyo(request):
@@ -373,6 +382,10 @@ def Coding_partner_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -383,6 +396,7 @@ def Coding_partner_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def Explore_Gem_yoyo(request):
@@ -390,6 +404,10 @@ def Explore_Gem_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -400,6 +418,7 @@ def Explore_Gem_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 
@@ -463,6 +482,10 @@ def Learning_coach_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -473,6 +496,7 @@ def Learning_coach_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def NewGem_yoyo(request):
@@ -480,6 +504,10 @@ def NewGem_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -513,6 +541,7 @@ def NewGem_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def gem_detail(request, gem_id):
@@ -529,6 +558,10 @@ def Public_Links_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]    
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -540,6 +573,7 @@ def Public_Links_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def SavedInfo_yoyo(request):
@@ -547,6 +581,10 @@ def SavedInfo_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -572,11 +610,14 @@ def SavedInfo_yoyo(request):
         "recent_chats": recent_chats,
         "story_gems": story_gems,
         "saved_infos": saved_infos_json,
+        "other_accounts": other_accounts,
     })
 
 def save_info(request):
     if not request.session.get("user_id"):
         return JsonResponse({"success": False, "message": "User not authenticated"})
+    
+    
     
     if request.method == "POST":
         try:
@@ -684,6 +725,10 @@ def Search_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
     
 
@@ -698,6 +743,7 @@ def Search_yoyo(request):
         "story_gems": story_gems,
         "today": today,
         "yesterday": yesterday,
+        "other_accounts": other_accounts,
     })
 
 def Upgrad_yoyo(request):
@@ -705,6 +751,10 @@ def Upgrad_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -715,6 +765,7 @@ def Upgrad_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def Writing_editor_yoyo(request):
@@ -722,6 +773,10 @@ def Writing_editor_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -732,6 +787,7 @@ def Writing_editor_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
 
 def Explore_Gem_yoyo(request):
@@ -739,6 +795,10 @@ def Explore_Gem_yoyo(request):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
 
     
     recent_chats = Chat.objects.filter(user=user, gem__isnull=True).order_by("-created_at")
@@ -749,6 +809,7 @@ def Explore_Gem_yoyo(request):
         "user": user,
         "recent_chats": recent_chats,
         "story_gems": story_gems,
+        "other_accounts": other_accounts,
     })
     
 def copy_gem(request, gem_id):
@@ -759,6 +820,10 @@ def copy_gem(request, gem_id):
         return JsonResponse({"success": False, "error": "Not logged in"})
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
     gem = get_object_or_404(Gem, id=gem_id, user=user)
 
     try:
@@ -788,7 +853,7 @@ def copy_gem(request, gem_id):
                         
                     )
 
-        return JsonResponse({"success": True, "new_gem_id": new_gem.id, "new_gem_name": new_gem.name})
+        return JsonResponse({"success": True, "new_gem_id": new_gem.id, "new_gem_name": new_gem.name,"other_accounts": other_accounts})
 
     except Exception as e:
         print("COPY ERROR:", e)
@@ -819,6 +884,10 @@ def newgem_preview_chat(request):
         return JsonResponse({"error": "Invalid request"}, status=400)
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
+    accounts = request.session.get("accounts", [])
+
+    # exclude current
+    other_accounts = [acc for acc in accounts if acc["id"] != user.id]
     data = json.loads(request.body)
     
 
@@ -845,6 +914,7 @@ def newgem_preview_chat(request):
             "user_message": message,
             "bot_reply": ai_response,
             "gem_name": gem_name,
+            "other_accounts": other_accounts,
             "success": True
         })
         

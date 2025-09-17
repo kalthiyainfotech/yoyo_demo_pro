@@ -388,131 +388,105 @@
                     </a>
                     <div id="account">
                         <div class="relative">
-                            <div class="relative group inline-block">
-                                <!-- Profile button -->
-                                <button id="profile-button"
-                                    class="w-8 h-8 bg-[#78909c] rounded-full flex items-center justify-center text-white font-medium">
-                                    {{ user.name|first|upper }}
-                                </button>
-
-                                <!-- Hover tooltip -->
-                                <div id="account-tooltips"
-                                    class="absolute z-[999] right-0 mt-1 min-w-56 p-2 bg-[#3c4043e6] hidden group-hover:block rounded">
-                                    <h5 class="text-[13px] text-[#E8EAED] font-medium m-0">Google Account</h5>
-                                    <p class="text-[13px] text-[#9AA0A6] font-medium m-0">{{ user.name }}</p>
-                                    <p class="text-[13px] text-[#9AA0A6] font-medium m-0">{{ user.email }}</p>
-                                </div>
+                        <div class="relative inline-block">
+                            <!-- Profile button -->
+                            <button id="profile-button"
+                                class="w-8 h-8 bg-[#78909c] rounded-full flex items-center justify-center text-white font-medium">
+                            {{ user.name|first|upper }}
+                            </button>
+                    
+                            <!-- Hover tooltip (optional) -->
+                            <div id="account-tooltips" class="absolute z-50 right-0 mt-1 min-w-56 p-2 bg-[#3c4043e6] hidden group-hover:block rounded">
+                            <h5 class="text-[13px] text-[#E8EAED] font-medium m-0">Account</h5>
+                            <p class="text-[13px] text-[#9AA0A6] font-medium m-0">{{ user.name }}</p>
+                            <p class="text-[13px] text-[#9AA0A6] font-medium m-0">{{ user.email }}</p>
                             </div>
-
-                            <!-- Dropdown -->
-                            <div id="profile-dropdown"
-                                class="absolute right-4 top-14 w-[400px] max-w-[90vw] sm:max-w-md rounded-3xl shadow-xl z-50 overflow-hidden"
-                                style="background-color: var(--dropdown-bg); color: var(--dropdown-text);">
-
-                                <!-- Header -->
-                                <div class="px-4 pt-5 pb-2 text-center text-sm font-medium" style="color: var(--dropdown-text);">
-                                    {{ user.email }}
+                        </div>
+                    
+                        <!-- Dropdown (initially hidden) -->
+                        <div id="profile-dropdown"
+                            class="absolute right-4 top-14 w-[400px] max-w-[90vw] sm:max-w-md rounded-3xl shadow-xl z-50 overflow-hidden hidden"
+                            style="background-color: var(--dropdown-bg); color: var(--dropdown-text);">
+                    
+                            <!-- Header -->
+                            <div class="px-4 pt-5 pb-2 text-center text-sm font-medium">
+                            {{ user.email }}
+                            </div>
+                    
+                            <!-- Avatar + Welcome -->
+                            <div class="px-4 py-4 flex flex-col items-center">
+                            <div id="profile-circle"
+                                class="w-[75px] h-[75px] bg-[#78909c] rounded-full flex items-center justify-center text-white text-4xl font-medium mb-2 overflow-hidden cursor-pointer">
+                                {{ user.name|first|upper }}
+                            </div>
+                    
+                            <div class="text-center mt-2">
+                                <div class="font-medium text-base sm:text-xl mb-3">Hi, {{ user.name }}</div>
+                                <a href="#" class="text-sm mt-2 py-2 font-semibold border rounded-full px-5"
+                                style="color: var(--accent-blue); border-color: var(--border-color);">
+                                Manage your Account
+                                </a>
+                            </div>
+                            </div>
+                    
+                            <!-- Other Accounts -->
+                            <div class="flex flex-col gap-1 mt-3 mb-3 m-3">
+                            <button id="toggleAccountsBtn"
+                                    class="w-full flex justify-between items-center px-4 py-4 bg-[--bg-main] hover:bg-[--account-hover] transition rounded-3xl">
+                                <span id="toggleText" class="text-base sm:text-lg">Show more accounts</span>
+                                <i id="iconExpand" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+                            </button>
+                    
+                            <!-- accountList: contains accounts stored in session (other than active) -->
+                            <div id="accountList" class="hidden flex flex-col gap-1">
+                                {% for acc in other_accounts %}
+                                <a href="{% url 'switch_account' acc.id %}?next={{ request.path }}"
+                                class="flex items-center gap-3 p-4 h-[60px] sm:p-3 cursor-pointer bg-[--bg-main] hover:bg-[--sidebar-hover]">
+                                <div class="w-[36px] h-[36px] bg-[#78909c] text-white flex items-center justify-center rounded-full font-semibold text-lg">
+                                    {{ acc.name|first|upper }}
                                 </div>
-
-                                <!-- Avatar + Welcome -->
-                                <div class="px-4 py-4 flex flex-col items-center">
-                                    <div class="relative">
-                                        <div id="profile-circle"
-                                            class="w-[75px] h-[75px] bg-[#78909c] rounded-full flex items-center justify-center text-white text-4xl font-medium mb-2 overflow-hidden cursor-pointer">
-                                            {{ user.name|first|upper }}
-                                        </div>
-                                    </div>
-
-                                    <div class="text-center mt-2">
-                                        <div class="font-medium text-base sm:text-xl mb-3">Hi, {{ user.name }}</div>
-                                        <a href="" 
-                                            class="text-sm mt-2 py-2 font-semibold border rounded-full px-5"
-                                            style="color: var(--accent-blue); border-color: var(--border-color);">
-                                            Manage your Google Account
-                                        </a>
-                                    </div>
+                                <div class="text-left truncate overflow-hidden w-[175px] sm:w-auto">
+                                    <div class="text-sm font-medium text-[var(--text-main)]">{{ acc.name }}</div>
+                                    <div class="text-xs text-[var(--text-muted)] truncate overflow-hidden whitespace-nowrap">{{ acc.email }}</div>
                                 </div>
-
-                                <!-- Other Accounts -->
-                                {% if other_accounts %}
-                                <div class="flex flex-col gap-1 mt-3 mb-3 m-3">
-                                    <button id="toggleAccountsBtn"
-                                        class="w-full flex justify-between items-center px-4 py-4 bg-[--bg-main] hover:bg-[--account-hover] transition rounded-t-3xl rounded-b-3xl">
-                                        <span id="toggleText" class="text-base sm:text-lg">Show more accounts</span>
-                                        <i id="iconExpand" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
-                                    </button>
-
-                                    <div id="accountList" class="hidden flex flex-col gap-1">
-                                        {% for acc in other_accounts %}
-                                        <div onclick="window.location.href=''"
-                                            class="flex items-center gap-3 p-4 h-[60px] sm:p-3 cursor-pointer bg-[--bg-main] hover:bg-[--sidebar-hover]">
-                                            <div class="w-[36px] h-[36px] bg-[#78909c] text-white flex items-center justify-center rounded-full font-semibold text-lg">
-                                                {{ acc.name|first|upper }}
-                                            </div>
-                                            <div class="text-left truncate overflow-hidden w-[175px] sm:w-auto">
-                                                <div class="text-sm font-medium text-[var(--text-main)]">{{ acc.name }}</div>
-                                                <div class="text-xs text-[var(--text-muted)] truncate overflow-hidden whitespace-nowrap">{{ acc.email }}</div>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-
-                                        <!-- Add Account -->
-                                        <div onclick="window.location.href='{% url 'login' %}'"
-                                            class="px-4 h-[60px] py-4 flex items-center text-sm justify-start bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
-                                            <div class="w-6 h-6 rounded-full flex items-center justify-center mr-2"
-                                                style="background-color: var(--sidebar-hover);">
-                                                <i class="fa-solid fa-plus"></i>
-                                            </div>
-                                            Add account
-                                        </div>
-
-                                        <!-- Sign Out -->
-                                        <div onclick="window.location.href='{% url 'logout_yoyo' %}'"
-                                            class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-b-3xl bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
-                                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960"
-                                                class="mr-2" width="24px" fill="currentColor">
-                                                <path
-                                                    d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z" />
-                                            </svg>
-                                            Sign out of all accounts
-                                        </div>
-                                    </div>
+                                </a>
+                                {% empty %}
+                                <div class="px-4 py-3 text-sm text-[var(--text-muted)]">
+                                No other accounts yet. Use “Add account” below to add another.
                                 </div>
-                                {% else %}
-                                <!-- If no other accounts -->
-                                <div class="flex justify-center items-center gap-[2px] px-4">
-                                    <div onclick="window.location.href='{% url 'login' %}'"
-                                        class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-s-full bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer w-[50%]">
-                                        <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2"
-                                            style="background-color: var(--sidebar-hover);">
-                                            <i class="fa-solid fa-plus"></i>
-                                        </div>
-                                        Add account
-                                    </div>
-                                    <div onclick="window.location.href='{% url 'logout_yoyo' %}'"
-                                        class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-e-full bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer w-[50%]">
-                                        <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2"
-                                            style="background-color: var(--sidebar-hover);">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" role="img" aria-labelledby="logoutOutlineTitle logoutOutlineDesc">
-                                                <title id="logoutOutlineTitle">Sign out</title>
-                                                <desc id="logoutOutlineDesc">Arrow pointing right leaving a door — sign out icon</desc>
-                                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M16 17l5-5-5-5"/>
-                                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M21 12H9"/>
-                                            </svg>
-
-                                        </div>
-                                        Sign Out
-                                    </div>
+                                {% endfor %}
+                    
+                                <!-- Add Account: sends user to the login page in add mode -->
+                                <a href="{% url 'login' %}?add=1&next={{ request.path }}"
+                                class="px-4 h-[60px] py-4 flex items-center text-sm justify-start bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
+                                <div class="w-6 h-6 rounded-full flex items-center justify-center mr-2"
+                                    style="background-color: var(--sidebar-hover);">
+                                    <i class="fa-solid fa-plus"></i>
                                 </div>
-                                {% endif %}
-
-                                <!-- Footer -->
-                                <div class="px-4 py-4 flex justify-center items-center text-xs text-[--text-muted]">
-                                    <a href="#" class="mr-1 rounded-md p-2 hover:bg-[var(--sidebar-hover)]">Privacy Policy</a>
-                                    <span class="text-[5px]"> ● </span>
-                                    <a href="#" class="ml-1 rounded-md p-2 hover:bg-[var(--sidebar-hover)]">Terms of Service</a>
-                                </div>
+                                Add account
+                                </a>
+                    
+                                <!-- Sign Out current account -->
+                                <a href="{% url 'logout_yoyo' %}" class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-b-3xl bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" class="mr-2" fill="currentColor">
+                                    <path d="M16 13v-2H7V8l-5 4 5 4v-3zM20 3H10v2h10v14H10v2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
+                                </svg>
+                                Sign out of current account
+                                </a>
+                    
+                                <!-- Sign out of all accounts -->
+                                <a href="{% url 'logout_yoyo' %}?all=1"
+                                class="px-4 h-[60px] py-4 flex items-center text-sm justify-start bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
+                                Sign out of all accounts
+                                </a>
+                            </div>
+                            </div>
+                    
+                            <!-- Footer -->
+                            <div class="px-4 py-4 flex justify-center items-center text-xs text-[--text-muted]">
+                            <a href="#" class="mr-1 rounded-md p-2 hover:bg-[var(--sidebar-hover)]">Privacy Policy</a>
+                            <span class="text-[5px]"> ● </span>
+                            <a href="#" class="ml-1 rounded-md p-2 hover:bg-[var(--sidebar-hover)]">Terms of Service</a>
                             </div>
                         </div>
                     </div>
@@ -813,30 +787,6 @@
     </script>
     <!---------------------------------------------->
 
-    
-    <script>
-        const toggleBtn = document.getElementById("toggleAccountsBtn");
-        const accountList = document.getElementById("accountList");
-        const toggleText = document.getElementById("toggleText");
-        const iconExpand = document.getElementById("iconExpand");
-
-        toggleBtn.addEventListener("click", () => {
-            const isVisible = !accountList.classList.contains("hidden");
-            accountList.classList.toggle("hidden");
-
-            // Update text and icon
-            toggleText.textContent = isVisible ? "Show more accounts" : "Hide more accounts";
-            iconExpand.classList.toggle("rotate-180", !isVisible);
-
-            // Toggle bottom radius of the button
-            if (!isVisible) {
-                toggleBtn.classList.remove("rounded-b-3xl");
-            } else {
-                toggleBtn.classList.add("rounded-b-3xl");
-            }
-        });
-
-    </script>
 
     <script>
         function handleGuidline(prompt) {
@@ -859,6 +809,7 @@
     </script>
     <script src="{% static "JS/index.js" %}"></script>
     <script src="{% static "JS/dropdown.js" %}"></script>
+    <script src="{% static "JS/Switch_Acc.js" %}"></script>
 
 
 
