@@ -16,6 +16,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.http import HttpResponseForbidden
 from django.urls import reverse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
 
@@ -142,6 +144,18 @@ def logout_yoyo(request):
     
     # Redirect to login page
     return redirect("login") 
+
+@require_POST
+def upload_profile_image(request):
+    if not request.session.get("user_id"):
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+    user = get_object_or_404(UserData, id=request.session["user_id"])
+    image = request.FILES.get("image")
+    if not image:
+        return JsonResponse({"success": False, "message": "No image provided"}, status=400)
+    user.profile_image = image
+    user.save()
+    return JsonResponse({"success": True, "image_url": user.profile_image.url})
 
 def home_yoyo(request):
     if not request.session.get("user_id"):

@@ -102,31 +102,38 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Profile image upload
+    // Profile image upload (preview + server upload)
     const profileInput = document.getElementById("profile-img-upload");
     const profileCircle = document.getElementById("profile-circle");
     if (profileCircle && profileInput) {
-        profileCircle.addEventListener("click", () => {
-            profileInput.click();
-        });
-
-        profileInput.addEventListener("change", function () {
+        profileCircle.addEventListener("click", () => profileInput.click());
+        profileInput.addEventListener("change", async function () {
             const file = this.files[0];
-            if (file && file.type.startsWith("image/")) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const imageUrl = e.target.result;
-                    profileCircle.innerHTML = "";
-                    profileCircle.style.backgroundImage = `url(${imageUrl})`;
-                    profileCircle.style.backgroundSize = "cover";
-                    profileCircle.style.backgroundPosition = "center";
-
+            if (!file || !file.type.startsWith("image/")) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const imageUrl = e.target.result;
+                profileCircle.innerHTML = "";
+                profileCircle.style.backgroundImage = `url(${imageUrl})`;
+                profileCircle.style.backgroundSize = "cover";
+                profileCircle.style.backgroundPosition = "center";
+                if (profileButton) {
                     profileButton.innerHTML = "";
                     profileButton.style.backgroundImage = `url(${imageUrl})`;
                     profileButton.style.backgroundSize = "cover";
                     profileButton.style.backgroundPosition = "center";
-                };
-                reader.readAsDataURL(file);
+                }
+            };
+            reader.readAsDataURL(file);
+
+            try {
+                const form = new FormData();
+                form.append('image', file);
+                const csrf = (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '';
+                const res = await fetch('/profile/upload-image/', { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: form });
+                if (!res.ok) console.error('Profile upload failed:', res.status);
+            } catch (err) {
+                console.error('Profile upload error:', err);
             }
         });
     }

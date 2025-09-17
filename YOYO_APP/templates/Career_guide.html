@@ -387,10 +387,11 @@
                 </div>
 
                 <div class="flex space-x-2 items-center">
-                    <a href="{% url "Upgrad_yoyo" %}"
+                    <a href="{% url "Upgrad_yoyo" %}" target="_blank"
                         class="h-9 block cursor-pointer rounded-md flex items-center justify-center text-xs font-semibold px-6 mr-3"
                         style="background-color: var(--sidebar-hover);">
                         <img rel="" src="{% static "img/favicon.png" %}" class="w-[20px] me-2" />
+
                         Upgrade
                     </a>
                     <div id="account">
@@ -398,8 +399,9 @@
                         <div class="relative inline-block">
                             <!-- Profile button -->
                             <button id="profile-button"
-                                class="w-8 h-8 bg-[#78909c] rounded-full flex items-center justify-center text-white font-medium">
-                            {{ user.name|first|upper }}
+                                class="w-8 h-8 bg-[#78909c] rounded-full flex items-center justify-center text-white font-medium"
+                                style="{% if user.profile_image %}background-image: url('{{ user.profile_image.url }}'); background-size: cover; background-position: center;{% endif %}">
+                            {% if not user.profile_image %}{{ user.name|first|upper }}{% endif %}
                             </button>
                     
                             <!-- Hover tooltip (optional) -->
@@ -423,9 +425,11 @@
                             <!-- Avatar + Welcome -->
                             <div class="px-4 py-4 flex flex-col items-center">
                             <div id="profile-circle"
-                                class="w-[75px] h-[75px] bg-[#78909c] rounded-full flex items-center justify-center text-white text-4xl font-medium mb-2 overflow-hidden cursor-pointer">
-                                {{ user.name|first|upper }}
+                                class="w-[75px] h-[75px] bg-[#78909c] rounded-full flex items-center justify-center text-white text-4xl font-medium mb-2 overflow-hidden cursor-pointer"
+                                style="{% if user.profile_image %}background-image: url('{{ user.profile_image.url }}'); background-size: cover; background-position: center;{% endif %}">
+                                {% if not user.profile_image %}{{ user.name|first|upper }}{% endif %}
                             </div>
+                            <input type="file" id="profile-img-upload" accept="image/*" class="hidden">
                     
                             <div class="text-center mt-2">
                                 <div class="font-medium text-base sm:text-xl mb-3">Hi, {{ user.name }}</div>
@@ -473,17 +477,11 @@
                                 Add account
                                 </a>
                     
-                                <!-- Sign Out current account -->
-                                <a href="{% url 'logout_yoyo' %}" class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-b-3xl bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
+                                <a href="{% url 'logout_yoyo' %}?all=1"
+                                class="px-4 h-[60px] py-4 flex items-center text-sm justify-start rounded-b-3xl bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" class="mr-2" fill="currentColor">
                                     <path d="M16 13v-2H7V8l-5 4 5 4v-3zM20 3H10v2h10v14H10v2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
                                 </svg>
-                                Sign out of current account
-                                </a>
-                    
-                                <!-- Sign out of all accounts -->
-                                <a href="{% url 'logout_yoyo' %}?all=1"
-                                class="px-4 h-[60px] py-4 flex items-center text-sm justify-start bg-[--bg-main] hover:bg-[--account-hover] cursor-pointer">
                                 Sign out of all accounts
                                 </a>
                             </div>

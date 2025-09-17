@@ -6,6 +6,7 @@ class UserData(models.Model):
     password = models.CharField(max_length=50)
     last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
 
     
     def __str__(self):

@@ -38,6 +38,7 @@ urlpatterns = [
    path("copy_gem/<int:gem_id>/", copy_gem, name="copy_gem"),
    path("reset-password/<uidb64>/<token>/", ResetPassword_yoyo, name="reset_password"),
    path("switch-account/<int:account_id>/", switch_account, name="switch_account"),
+   path("profile/upload-image/", upload_profile_image, name="upload_profile_image"),
 
 
 ]
