@@ -1,4 +1,5 @@
 {% load static %}
+{% load yoyo_tokens %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -294,9 +295,9 @@
                             </h3>
                             <ul id="story-gems">
                                 {% for gem in story_gems %}
-                                    <li class="chat-item" data-gem-id="{{ gem.id }}">
+                                    <li class="chat-item" data-gem-id="{{ gem.id|gem_token }}">
                                         <!-- Gem Title only -->
-                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id|chat_token %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id|gem_token }}{% endif %}'">
                                             {{ gem.name }}
                                         </span>
 
@@ -304,7 +305,7 @@
                                         <div class="chat-actions">
                                             <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
                                             <div class="chat-dropdown hidden">
-                                                <div onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
+                                                <div onclick="startRenameGem(this, '{{ gem.id|gem_token }}')">Rename</div>
                                                 <div onclick="deleteGem('{{ gem.id }}')">Delete</div>
                                             </div>
                                         </div>
@@ -335,8 +336,8 @@
                             <h3>Recent</h3>
                             <ul id="recent-chats">
                                 {% for chat in recent_chats %}
-                                    <li class="chat-item" data-chat-id="{{ chat.id }}">
-                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                    <li class="chat-item" data-chat-id="{{ chat.id|chat_token }}">
+                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id|chat_token %}'">
                                             {{ chat.title }}
                                         </span>
                                         <div class="chat-actions">
@@ -552,7 +553,7 @@
                             <!-- accountList: contains accounts stored in session (other than active) -->
                             <div id="accountList" class="hidden flex flex-col gap-1">
                                 {% for acc in other_accounts %}
-                                <a href="{% url 'switch_account' acc.id %}?next={{ request.path }}"
+                                <a href="{% url 'switch_account' acc.id|user_token %}?next={{ request.path }}"
                                 class="flex items-center gap-3 p-4 h-[60px] sm:p-3 cursor-pointer bg-[--bg-main] hover:bg-[--sidebar-hover]">
                                 <div class="w-[36px] h-[36px] bg-[#78909c] text-white flex items-center justify-center rounded-full font-semibold text-lg">
                                     {{ acc.name|first|upper }}
@@ -795,17 +796,17 @@
                                 {% if story_gems %}
                                     {% for gem in story_gems %}
                                         <div class="chat-item group p-4 rounded-lg shadow bg-[--bg-hover] hover:bg-[--border-color] transition flex items-center justify-between"
-                                            data-gem-id="{{ gem.id }}">
+                                            data-gem-id="{{ gem.id|gem_token }}">
 
                                             <!-- Gem Title -->
                                             <span class="chat-title cursor-pointer" 
-                                                onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                                onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id|chat_token %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id|gem_token }}{% endif %}'">
                                                 {{ gem.name }}
                                             </span>
 
                                             <!-- Actions -->
                                             <div class="chat-actions relative">
-                                                <span class="chat-menu cursor-pointer"  onclick="startRenameGem(this, '{{ gem.id }}')"><i class="bi bi-pen"></i></span>
+                                                <span class="chat-menu cursor-pointer"  onclick="startRenameGem(this, '{{ gem.id|gem_token }}')"><i class="bi bi-pen"></i></span>
                                                 <span class="chat-menu cursor-pointer text-xl" onclick="toggleMenu(this)">⋮</span>
                                                 <div class="chat-dropdown hidden absolute right-0 mt-2 w-28 bg-[--bg-hover] border border-[--border-color] rounded shadow">
                                                     <a href="{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}"
@@ -1094,7 +1095,7 @@ function copyGem(gemId) {
         if (data.success) {
             showCopyModal("Success", "Gem copied successfully!");
             // Add the new gem to the UI dynamically
-            addGemToUI(data.new_gem_name || "Copied Gem", data.new_gem_id);
+            addGemToUI(data.new_gem_name || "Copied Gem", data.new_gem_token || data.new_gem_id);
         } else {
             showCopyModal("Failed", "Failed to copy: " + data.error);
         }

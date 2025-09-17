@@ -1,4 +1,5 @@
 {% load static %}
+{% load yoyo_tokens %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -193,7 +194,7 @@
                                 {% for gem in story_gems %}
                                     <li class="chat-item" data-gem-id="{{ gem.id }}">
                                         <!-- Gem Title only -->
-                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id|chat_token %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id|gem_token }}{% endif %}'">
                                             {{ gem.name }}
                                         </span>
 
@@ -233,7 +234,7 @@
                             <ul id="recent-chats">
                                 {% for chat in recent_chats %}
                                     <li class="chat-item" data-chat-id="{{ chat.id }}">
-                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id|chat_token %}'">
                                             {{ chat.title }}
                                         </span>
                                         <div class="chat-actions">
@@ -451,7 +452,7 @@
                             <!-- accountList: contains accounts stored in session (other than active) -->
                             <div id="accountList" class="hidden flex flex-col gap-1">
                                 {% for acc in other_accounts %}
-                                <a href="{% url 'switch_account' acc.id %}?next={{ request.path }}"
+                                <a href="{% url 'switch_account' acc.id|user_token %}?next={{ request.path }}"
                                 class="flex items-center gap-3 p-4 h-[60px] sm:p-3 cursor-pointer bg-[--bg-main] hover:bg-[--sidebar-hover]">
                                 <div class="w-[36px] h-[36px] bg-[#78909c] text-white flex items-center justify-center rounded-full font-semibold text-lg">
                                     {{ acc.name|first|upper }}

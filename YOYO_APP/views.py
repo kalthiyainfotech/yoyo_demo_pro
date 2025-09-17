@@ -18,9 +18,44 @@ from django.http import HttpResponseForbidden
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.core import signing
 
 os.environ['_BARD_API_KEY'] = "g.a000zQjK6BR93_A9F8DfZ8yOT_5TyCG7mUNu8llCI-Nri1ZBTk7oZhBWihQBRny7k_5UM5Mg5gACgYKAcgSARUSFQHGX2MiMhnVGsHablU-CEYjkqihcxoVAUF8yKrDSgDa2XQHqa44IS6rT7C-0076"
 
+
+
+def _encode_id(kind, numeric_id):
+    """Return an opaque, signed token for a numeric id using SECRET_KEY.
+
+    kind: a short string namespace (e.g., "user", "chat", "gem", "savedinfo").
+    """
+    return signing.dumps({"id": int(numeric_id)}, salt=f"yoyo:{kind}")
+
+
+def _resolve_id(kind, value):
+    """Resolve either a signed token or a plain integer string to an int id.
+
+    Accepts legacy integer ids (e.g., "123") for backward compatibility.
+    """
+    if value is None:
+        return None
+    # If already an int, return
+    if isinstance(value, int):
+        return int(value)
+    # Value could be "123" or a signed token
+    text = str(value)
+    # Quick path: plain integer
+    try:
+        return int(text)
+    except (TypeError, ValueError):
+        pass
+    # Try signed token
+    try:
+        data = signing.loads(text, salt=f"yoyo:{kind}")
+        return int(data.get("id"))
+    except Exception:
+        # As a last resort, raise 404 by returning None; callers should handle
+        return None
 
 
 def _get_session_accounts(request):
@@ -119,12 +154,13 @@ def login_yoyo(request):
 def switch_account(request, account_id):
     """Switch active_account_id to one of the accounts already in the session (GET link is fine)."""
     accounts = _get_session_accounts(request)
-    if any(int(a["id"]) == int(account_id) for a in accounts):
+    resolved_id = _resolve_id("user", account_id)
+    if resolved_id is not None and any(int(a["id"]) == int(resolved_id) for a in accounts):
         # update active account id
-        request.session["active_account_id"] = int(account_id)
+        request.session["active_account_id"] = int(resolved_id)
         # also update the session's current user fields so templates/views reflect the switch
         try:
-            user = UserData.objects.get(id=account_id)
+            user = UserData.objects.get(id=resolved_id)
             request.session["user_id"] = int(user.id)
             request.session["user_name"] = user.name
         except UserData.DoesNotExist:
@@ -202,7 +238,8 @@ def new_chat(request):
     gem_id = request.GET.get("gem_id")
     gem = None
     if gem_id:
-        gem = get_object_or_404(Gem, id=gem_id, user=user)
+        resolved_gem_id = _resolve_id("gem", gem_id)
+        gem = get_object_or_404(Gem, id=resolved_gem_id, user=user)
 
     
     if gem:
@@ -242,7 +279,8 @@ def chat_detail(request, chat_id=None):
     story_gems = Gem.objects.filter(user=user).prefetch_related("chats")
     chat = None
     if chat_id:
-        chat = get_object_or_404(Chat, id=chat_id, user=user)
+        resolved_chat_id = _resolve_id("chat", chat_id)
+        chat = get_object_or_404(Chat, id=resolved_chat_id, user=user)
 
     if request.method == "POST":
         text = request.POST.get("message", "").strip()
@@ -302,8 +340,9 @@ def send_message(request, chat_id=None):
         return JsonResponse({"error": "Empty message"}, status=400)
 
     chat = None
-    if chat_id and chat_id != 0:
-        chat = get_object_or_404(Chat, id=chat_id, user=user)
+    if chat_id and str(chat_id) != "0":
+        resolved_chat_id = _resolve_id("chat", chat_id)
+        chat = get_object_or_404(Chat, id=resolved_chat_id, user=user)
     if not chat:
         chat = Chat.objects.create(user=user, title="New Chat")
     if chat.title == "New Chat":
@@ -322,6 +361,7 @@ def send_message(request, chat_id=None):
 
     return JsonResponse({
         "chat_id": chat.id,
+        "chat_token": _encode_id("chat", chat.id),
         "user_message": text,
         "bot_reply": ai_response,
         "chat_title": chat.title,
@@ -563,7 +603,8 @@ def gem_detail(request, gem_id):
         return redirect("login")
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    gem = get_object_or_404(Gem, id=gem_id, user=user)
+    resolved_gem_id = _resolve_id("gem", gem_id)
+    gem = get_object_or_404(Gem, id=resolved_gem_id, user=user)
 
     return render(request, "NewGem.html", {"gem": gem, "user": user})
 
@@ -673,7 +714,8 @@ def delete_saved_info(request, info_id):
     if request.method == "DELETE":
         try:
             user = get_object_or_404(UserData, id=request.session["user_id"])
-            saved_info = get_object_or_404(SavedInfo, id=info_id, user=user)
+            resolved_info_id = _resolve_id("savedinfo", info_id)
+            saved_info = get_object_or_404(SavedInfo, id=resolved_info_id, user=user)
             saved_info.delete()
             
             return JsonResponse({"success": True, "message": "Info deleted successfully"})
@@ -712,7 +754,8 @@ def update_saved_info(request, info_id):
                 return JsonResponse({"success": False, "message": "Info text cannot be empty"})
             
             user = get_object_or_404(UserData, id=request.session["user_id"])
-            saved_info = get_object_or_404(SavedInfo, id=info_id, user=user)
+            resolved_info_id = _resolve_id("savedinfo", info_id)
+            saved_info = get_object_or_404(SavedInfo, id=resolved_info_id, user=user)
             
             saved_info.info_text = info_text
             saved_info.save()
@@ -838,7 +881,8 @@ def copy_gem(request, gem_id):
 
     # exclude current
     other_accounts = [acc for acc in accounts if acc["id"] != user.id]
-    gem = get_object_or_404(Gem, id=gem_id, user=user)
+    resolved_gem_id = _resolve_id("gem", gem_id)
+    gem = get_object_or_404(Gem, id=resolved_gem_id, user=user)
 
     try:
         with transaction.atomic():
@@ -867,7 +911,7 @@ def copy_gem(request, gem_id):
                         
                     )
 
-        return JsonResponse({"success": True, "new_gem_id": new_gem.id, "new_gem_name": new_gem.name,"other_accounts": other_accounts})
+        return JsonResponse({"success": True, "new_gem_id": new_gem.id, "new_gem_token": _encode_id("gem", new_gem.id), "new_gem_name": new_gem.name, "other_accounts": other_accounts})
 
     except Exception as e:
         print("COPY ERROR:", e)
@@ -875,7 +919,8 @@ def copy_gem(request, gem_id):
     
 def rename_chat(request, chat_id):
     if request.method == "POST":
-        chat = get_object_or_404(Chat, id=chat_id, user_id=request.session["user_id"])
+        resolved_chat_id = _resolve_id("chat", chat_id)
+        chat = get_object_or_404(Chat, id=resolved_chat_id, user_id=request.session["user_id"])
         data = json.loads(request.body)
         chat.title = data.get("title", chat.title)
         chat.save()
@@ -884,7 +929,8 @@ def rename_chat(request, chat_id):
 
 def delete_chat(request, chat_id):
     if request.method == "POST":
-        chat = get_object_or_404(Chat, id=chat_id, user_id=request.session["user_id"])
+        resolved_chat_id = _resolve_id("chat", chat_id)
+        chat = get_object_or_404(Chat, id=resolved_chat_id, user_id=request.session["user_id"])
         chat.delete()
         return JsonResponse({"success": True})
     return JsonResponse({"success": False}, status=400)
@@ -944,7 +990,8 @@ def rename_gem(request, gem_id):
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    gem = get_object_or_404(Gem, id=gem_id, user=user)
+    resolved_gem_id = _resolve_id("gem", gem_id)
+    gem = get_object_or_404(Gem, id=resolved_gem_id, user=user)
 
     if request.method == "POST":
         data = json.loads(request.body)
@@ -963,7 +1010,8 @@ def delete_gem(request, gem_id):
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
     user = get_object_or_404(UserData, id=request.session["user_id"])
-    gem = get_object_or_404(Gem, id=gem_id, user=user)
+    resolved_gem_id = _resolve_id("gem", gem_id)
+    gem = get_object_or_404(Gem, id=resolved_gem_id, user=user)
 
     if request.method == "POST":
         gem.delete()
@@ -972,10 +1020,48 @@ def delete_gem(request, gem_id):
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 def chat_page(request, gem_id):
-    gem = get_object_or_404(Gem, id=gem_id, user=request.session.get("user_id"))
+    resolved_gem_id = _resolve_id("gem", gem_id)
+    gem = get_object_or_404(Gem, id=resolved_gem_id, user=request.session.get("user_id"))
     chats = gem.chats.all().order_by("-created_at")
 
     return render(request, "chat_page.html", {
         "gem": gem,
         "chats": chats,
+    })
+
+def Chat_out(request):
+    return render(request, "Chat.html")
+
+@csrf_exempt
+@require_POST
+def chat_out_send(request):
+    """Public chat endpoint: no auth, no DB writes. Sends prompt to Bard and returns reply.
+
+    Accepts either JSON {"message": "..."} or form-data with field "message".
+    """
+    # Parse input
+    content_type = request.META.get("CONTENT_TYPE", "")
+    if content_type.startswith("multipart/form-data"):
+        text = (request.POST.get("message", "") or "").strip()
+    else:
+        try:
+            data = json.loads(request.body or b"{}")
+        except Exception:
+            data = {}
+        text = str(data.get("message", "")).strip()
+
+    if not text:
+        return JsonResponse({"error": "Empty message"}, status=400)
+
+    # Call Bard without persisting anything
+    try:
+        bard = Bard(token=os.environ.get("_BARD_API_KEY"))
+        ai_response = bard.get_answer(text).get("content", " No reply from Bard.")
+    except Exception as e:
+        return JsonResponse({"error": f"Error getting AI response: {str(e)}"}, status=500)
+
+    return JsonResponse({
+        "user_message": text,
+        "bot_reply": ai_response,
+        "success": True,
     })

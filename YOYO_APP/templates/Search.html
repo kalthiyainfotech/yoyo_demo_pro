@@ -1,4 +1,5 @@
 {% load static %}
+{% load yoyo_tokens %}
 <!DOCTYPE html>
 <html lang="en" class="dark-theme">
 
@@ -131,9 +132,9 @@
                             </h3>
                             <ul id="story-gems">
                                 {% for gem in story_gems %}
-                                    <li data-gem-id="{{ gem.id }}">
+                                    <li data-gem-id="{{ gem.id|gem_token }}">
                                         <!-- Gem Title only -->
-                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
+                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id|chat_token %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id|gem_token }}{% endif %}'">
                                             {{ gem.name }}
                                         </span>
 
@@ -141,8 +142,8 @@
                                         <div class="chat-actions">
                                             <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
                                             <div class="chat-dropdown hidden">
-                                                <div onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
-                                                <div onclick="deleteGem('{{ gem.id }}')">Delete</div>
+                                                <div onclick="startRenameGem(this, '{{ gem.id|gem_token }}')">Rename</div>
+                                                <div onclick="deleteGem('{{ gem.id|gem_token }}')">Delete</div>
                                             </div>
                                         </div>
                                     </li>
@@ -172,15 +173,15 @@
                             <h3>Recent</h3>
                             <ul id="recent-chats">
                                 {% for chat in recent_chats %}
-                                    <li class="chat-item" data-chat-id="{{ chat.id }}">
-                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                    <li class="chat-item" data-chat-id="{{ chat.id|chat_token }}">
+                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id|chat_token %}'">
                                             {{ chat.title }}
                                         </span>
                                         <div class="chat-actions">
                                             <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
                                             <div class="chat-dropdown hidden">
-                                                <div onclick="startRename(this, '{{ chat.id }}')">Rename</div>
-                                                <div onclick="deleteChat('{{ chat.id }}')">Delete</div>
+                                                <div onclick="startRename(this, '{{ chat.id|chat_token }}')">Rename</div>
+                                                <div onclick="deleteChat('{{ chat.id|chat_token }}')">Delete</div>
                                             </div>
                                         </div>
                                     </li>
@@ -389,7 +390,7 @@
                             <!-- accountList: contains accounts stored in session (other than active) -->
                             <div id="accountList" class="hidden flex flex-col gap-1">
                                 {% for acc in other_accounts %}
-                                <a href="{% url 'switch_account' acc.id %}?next={{ request.path }}"
+                                <a href="{% url 'switch_account' acc.id|user_token %}?next={{ request.path }}"
                                 class="flex items-center gap-3 p-4 h-[60px] sm:p-3 cursor-pointer bg-[--bg-main] hover:bg-[--sidebar-hover]">
                                 <div class="w-[36px] h-[36px] bg-[#78909c] text-white flex items-center justify-center rounded-full font-semibold text-lg">
                                     {{ acc.name|first|upper }}
@@ -464,8 +465,8 @@
                             <ul id="chatList">
                                 {% for chat in recent_chats %}
                                     <li class="flex justify-between py-4 px-4 rounded cursor-pointer chat-item hover:bg-[-bg-hover] transition-colors"
-                                        data-chat-id="{{ chat.id }}"
-                                        onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
+                                        data-chat-id="{{ chat.id|chat_token }}"
+                                        onclick="window.location.href='{% url 'chat_detail' chat.id|chat_token %}'">
                                         <span class="truncate">{{ chat.title }}</span>
                                         <span class="chat-date text-sm text-gray-500 ml-2 whitespace-nowrap">
                                             {% if chat.created_at.date == today %}
