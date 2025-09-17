@@ -77,9 +77,9 @@
                             </h3>
                             <ul id="story-gems">
                                 {% for gem in story_gems %}
-                                    <li class="chat-item" data-gem-id="{{ gem.id|gem_token }}">
+                                    <li class="chat-item" data-gem-id="{{ gem.id }}">
                                         <!-- Gem Title only -->
-                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id|chat_token %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id|gem_token }}{% endif %}'">
+                                        <span class="chat-title" onclick="window.location.href='{% if gem.chats.first %}{% url 'chat_detail' gem.chats.first.id %}{% else %}{% url 'new_chat' %}?gem_id={{ gem.id }}{% endif %}'">
                                             {{ gem.name }}
                                         </span>
 
@@ -87,8 +87,8 @@
                                         <div class="chat-actions">
                                             <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
                                             <div class="chat-dropdown hidden">
-                                                <div onclick="startRenameGem(this, '{{ gem.id|gem_token }}')">Rename</div>
-                                                <div onclick="deleteGem('{{ gem.id|gem_token }}')">Delete</div>
+                                                <div onclick="startRenameGem(this, '{{ gem.id }}')">Rename</div>
+                                                <div onclick="deleteGem('{{ gem.id }}')">Delete</div>
                                             </div>
                                         </div>
                                     </li>
@@ -118,15 +118,15 @@
                             <h3>Recent</h3>
                             <ul id="recent-chats">
                                 {% for chat in recent_chats %}
-                                    <li class="chat-item" data-chat-id="{{ chat.id|chat_token }}">
-                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id|chat_token %}'">
+                                    <li class="chat-item" data-chat-id="{{ chat.id }}">
+                                        <span class="chat-title" onclick="window.location.href='{% url 'chat_detail' chat.id %}'">
                                             {{ chat.title }}
                                         </span>
                                         <div class="chat-actions">
                                             <span class="chat-menu" onclick="toggleMenu(this)">⋮</span>
                                             <div class="chat-dropdown hidden">
-                                                <div onclick="startRename(this, '{{ chat.id|chat_token }}')">Rename</div>
-                                                <div onclick="deleteChat('{{ chat.id|chat_token }}')">Delete</div>
+                                                <div onclick="startRename(this, '{{ chat.id }}')">Rename</div>
+                                                <div onclick="deleteChat('{{ chat.id }}')">Delete</div>
                                             </div>
                                         </div>
                                     </li>
@@ -724,6 +724,30 @@
     </script>
     <!---------------------------------------------->
 
+    
+    <script>
+        const toggleBtn = document.getElementById("toggleAccountsBtn");
+        const accountList = document.getElementById("accountList");
+        const toggleText = document.getElementById("toggleText");
+        const iconExpand = document.getElementById("iconExpand");
+
+        toggleBtn.addEventListener("click", () => {
+            const isVisible = !accountList.classList.contains("hidden");
+            accountList.classList.toggle("hidden");
+
+            // Update text and icon
+            toggleText.textContent = isVisible ? "Show more accounts" : "Hide more accounts";
+            iconExpand.classList.toggle("rotate-180", !isVisible);
+
+            // Toggle bottom radius of the button
+            if (!isVisible) {
+                toggleBtn.classList.remove("rounded-b-3xl");
+            } else {
+                toggleBtn.classList.add("rounded-b-3xl");
+            }
+        });
+
+    </script>
 
     <script>
         // Pass saved_infos data to JavaScript
@@ -732,7 +756,6 @@
     <script src="{% static "JS/SavedInfo.js" %}"></script>
     <script src="{% static "JS/index.js" %}"></script>
     <script src="{% static "JS/dropdown.js" %}"></script>
-    <script src="{% static "JS/Switch_Acc.js" %}"></script>
     
 </body>
 

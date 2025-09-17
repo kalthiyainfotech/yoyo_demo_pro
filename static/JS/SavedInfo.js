@@ -39,7 +39,9 @@ geminitool.addEventListener('click', function () {
 
 switchbox.addEventListener('click', function () {
     addInfo.disabled = !switchbox.checked;
-    infoP.classList.toggle('text-[#7C7C7C]') = !switchbox.checked;
+    if (infoP) {
+        infoP.classList.toggle('text-[#7C7C7C]', !switchbox.checked);
+    }
 
 })
 
@@ -202,18 +204,10 @@ const Display = async (event) => {
                 <div class="saveshowdata bg-[--sidebar-bg] w-full py-3 px-4 mb-1 flex items-center justify-between ${borderRadius}">
                     <p class="break-words text-md text-[--sidebar-text]">${v.info_text}</p>
                     <div class="relative">
-                        <span id="action-ED-${index}" onClick="handleActionBtn(${index})"
+                        <span id="action-ED-${index}" data-id="${v.id}" onClick="handleActionBtn(${index})"
                             class="action material-symbols-outlined rounded-full hover:bg-[--bg-hover] w-[40px] h-[40px] items-center justify-center flex cursor-pointer">more_vert</span>
-                        <div id="action-data-${index}" class="absolute bg-[--dropDown] top-[100%] left-[0%] rounded py-2 shadow-lg hidden z-10">
-                            <ul>
-                                <li onclick="handleEdit('${v.id}')" class="tooltip-custom text-md flex items-center hover:bg-[--bg-hover] px-3 py-2 cursor-pointer" data-tooltip="Edit this info">
-                                    <span class="material-symbols-outlined text-2xl mr-3">edit</span>Edit
-                                </li>
-                                <li onclick="handleDelete('${v.id}')" class="tooltip-custom text-md flex items-center hover:bg-[--bg-hover] px-3 py-2 cursor-pointer" data-tooltip="Delete this info">
-                                    <span class="material-symbols-outlined text-2xl mr-3">delete</span>Delete
-                                </li>
-                            </ul>
-                        </div>
+                        <!-- Inline dropdown kept for semantics but not used; real menu is portal -->
+                        <div id="action-data-${index}" class="hidden"></div>
                     </div>
                 </div>
             `;
@@ -228,34 +222,64 @@ const Display = async (event) => {
 };
 
 function handleActionBtn(index) {
-    const currentDropdown = document.getElementById(`action-data-${index}`);
-    
-    // Close all other dropdowns first
-    document.querySelectorAll('[id^="action-data-"]').forEach(drop => {
-      if (drop !== currentDropdown) {
-        drop.classList.add("hidden");
-      }
-    });
-    
-    // Toggle current dropdown
-    currentDropdown.classList.toggle("hidden");
-    
-    // Position the dropdown properly on mobile
-    if (window.innerWidth <= 768) {
-      const btnRect = document.getElementById(`action-ED-${index}`).getBoundingClientRect();
-      currentDropdown.style.left = 'auto';
-      currentDropdown.style.right = '0';
+    // Create or reuse a global portal container
+    let portal = document.getElementById('saved-info-portal-menu');
+    if (!portal) {
+        portal = document.createElement('div');
+        portal.id = 'saved-info-portal-menu';
+        portal.style.position = 'fixed';
+        portal.style.zIndex = '100000';
+        portal.style.minWidth = '160px';
+        portal.style.borderRadius = '12px';
+        portal.style.background = '#1B1C1D';
+        portal.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
+        portal.style.display = 'none';
+        portal.innerHTML = `
+            <ul style="padding:8px 0; margin:0; list-style:none; background:#1B1C1D;">
+                <li id="portal-edit" class="tooltip-custom flex items-center px-3 py-2 cursor-pointer text-md" style="background:#1B1C1D; color: var(--text-main);">
+                    <span class="material-symbols-outlined text-2xl mr-3">edit</span> Edit
+                </li>
+                <li id="portal-delete" class="tooltip-custom flex items-center px-3 py-2 cursor-pointer text-md" style="background:#1B1C1D; color: var(--text-main);">
+                    <span class="material-symbols-outlined text-2xl mr-3">delete</span> Delete
+                </li>
+            </ul>
+        `;
+        document.body.appendChild(portal);
     }
+
+    // Close if open for another item
+    if (portal.style.display === 'block' && portal.getAttribute('data-index') == String(index)) {
+        portal.style.display = 'none';
+        return;
+    }
+
+    // Attach handlers for this item
+    const btn = document.getElementById(`action-ED-${index}`);
+    const id = btn ? btn.getAttribute('data-id') : null;
+    portal.querySelector('#portal-edit').onclick = () => { if (id) handleEdit(id); portal.style.display = 'none'; };
+    portal.querySelector('#portal-delete').onclick = () => { if (id) handleDelete(id); };
+
+    // Position near the trigger button
+    if (btn) {
+        const rect = btn.getBoundingClientRect();
+        const top = rect.bottom + 6; // small gap
+        const left = Math.min(window.innerWidth - 200, rect.right - 160); // align to right of button
+        portal.style.top = `${Math.min(top, window.innerHeight - 10)}px`;
+        portal.style.left = `${Math.max(8, left)}px`;
+    }
+
+    portal.setAttribute('data-index', String(index));
+    portal.style.display = 'block';
   }
 
 
 document.addEventListener('click', (event) => {
-    document.querySelectorAll('[id^="action-data-"]').forEach(drop => {
-        const parentDiv = drop.parentElement;
-        if (parentDiv && !parentDiv.contains(event.target)) {
-            drop.classList.add("hidden");
-        }
-    });
+    const portal = document.getElementById('saved-info-portal-menu');
+    if (!portal) return;
+    const isTrigger = event.target.closest && event.target.closest('[id^="action-ED-"]');
+    if (portal.style.display === 'block' && !portal.contains(event.target) && !isTrigger) {
+        portal.style.display = 'none';
+    }
 });
 
 
