@@ -392,12 +392,17 @@
                     <div id="chat-history" class=" space-y-4 relative">
                         {% if messages %}
                             {% for message in messages %}
-                                <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-[#212529] text-white ml-auto{% else %}{% endif %}" style="{% if message.sender != 'user' %}background: transparent; color: var(--text-main);{% endif %}">
-                                    {% if message.text %}<div style="white-space: pre-wrap;">{{ message.text }}</div>{% endif %}
+                                <div class="fade-in p-3 rounded-lg max-w-xl {% if message.sender == 'user' %}bg-[#212529] text-white ml-auto{% else %}{% endif %} {% if message.sender != 'user' %}relative{% endif %}" style="{% if message.sender != 'user' %}background: transparent; color: var(--text-main);{% endif %}">
+                                    {% if message.text %}<div class="message-text" style="white-space: pre-wrap;">{{ message.text }}</div>{% endif %}
                                     {% if message.image %}
                                         <div class="mt-2">
                                             <img src="{{ message.image.url }}" class="max-w-[220px] rounded-lg" alt="uploaded image" />
                                         </div>
+                                    {% endif %}
+                                    {% if message.sender != 'user' and message.text %}
+                                        <button class="copy-message absolute top-1 right-1 text-xs opacity-70 hover:opacity-100" title="Copy">
+                                            <i class="fa-regular fa-copy"></i>
+                                        </button>
                                     {% endif %}
                                     <div class="text-[10px] opacity-70 mt-1">
                                         {% if message.sender == 'user' %}{% else %}{% endif %}
@@ -769,11 +774,14 @@
 
             // Bot thinking bubble (receiver - no background color)
             const botBubble = document.createElement("div");
-            botBubble.className = "fade-in p-3 rounded-lg max-w-xl";
+            botBubble.className = "fade-in p-3 rounded-lg max-w-xl relative";
             botBubble.style.background = "transparent";
             botBubble.style.color = "var(--text-main)";
-            botBubble.style.whiteSpace = "pre-wrap";
-            botBubble.innerHTML = "thinking...";
+            const botText = document.createElement('div');
+            botText.className = 'message-text';
+            botText.style.whiteSpace = 'pre-wrap';
+            botText.textContent = 'thinking...';
+            botBubble.appendChild(botText);
             chatArea.appendChild(botBubble);
             chatArea.scrollTop = chatArea.scrollHeight;
 
@@ -817,8 +825,7 @@
                     console.log('New chat ID:', currentChatId);
                     // Typewriter effect for bot response with background-tab handling
                     const replyText = String(data.bot_reply || "No reply");
-                    botBubble.textContent = "";
-                    botBubble.style.whiteSpace = "pre-wrap";
+                    botText.textContent = "";
 
                     let instantRender = document.hidden === true;
                     const handleVisibility = () => {
@@ -844,10 +851,19 @@
                             await new Promise(r => setTimeout(r, speed));
                             chatArea.scrollTop = chatArea.scrollHeight;
                         }
-                    })(botBubble, replyText, 10);
+                    })(botText, replyText, 10);
 
                     document.removeEventListener('visibilitychange', handleVisibility);
                     
+                    // Add copy button for the bot message if there is text
+                    if ((botText.textContent || '').trim()) {
+                        const copyBtn = document.createElement('button');
+                        copyBtn.className = 'copy-message absolute top-1 right-1 text-xs opacity-70 hover:opacity-100';
+                        copyBtn.title = 'Copy';
+                        copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+                        botBubble.appendChild(copyBtn);
+                    }
+
                     // If this was a new chat, redirect to the chat page
                     if (currentChatId && window.location.pathname === '/home/') {
                         console.log('Redirecting to chat:', `/chat/${currentChatId}/`);
@@ -855,7 +871,7 @@
                     }
                 }
             } catch (err) {
-                botBubble.innerHTML = `⚠️ Network error: ${escapeHtml(err.message)}`;
+                botText.textContent = `⚠️ Network error: ${escapeHtml(err.message)}`;
             }
 
             chatArea.scrollTop = chatArea.scrollHeight;
@@ -914,6 +930,29 @@
     <script src="{% static "JS/dropdown.js" %}"></script>
     <script src="{% static "JS/index.js" %}"></script>
     <script src="{% static "JS/Switch_Acc.js" %}"></script>
+    <script>
+        // Copy handler for chat messages (delegated)
+        (function(){
+            const chatArea = document.getElementById('chat-history');
+            if (!chatArea) return;
+            chatArea.addEventListener('click', async function(e){
+                const btn = e.target.closest('.copy-message');
+                if (!btn) return;
+                const bubble = btn.closest('.fade-in');
+                if (!bubble) return;
+                const textEl = bubble.querySelector('.message-text');
+                const text = textEl ? (textEl.textContent || '').trim() : '';
+                if (!text) return;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    btn.classList.add('opacity-100');
+                    setTimeout(()=>btn.classList.remove('opacity-100'), 600);
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+            });
+        })();
+    </script>
     
 
 </body>

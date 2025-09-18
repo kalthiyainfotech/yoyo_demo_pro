@@ -108,10 +108,6 @@ def _get_active_user(request):
 
 # ---------- Views ----------
 def register_yoyo(request):
-    # If user is already logged in, redirect to home page
-    if request.session.get("user_id"):
-        return redirect("home")
-    
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
@@ -127,10 +123,11 @@ def register_yoyo(request):
     return render(request, "Register.html", {"form": form})
 
 def login_yoyo(request):
-    # If user is already logged in, redirect to home page
-    if request.session.get("user_id"):
-        return redirect("home")
-    
+    # If user is already logged in and not explicitly adding an account, go home
+    if request.method == "GET":
+        add_mode = request.GET.get("add")
+        if request.session.get("user_id") and not add_mode:
+            return redirect("home")
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -486,10 +483,9 @@ def Explore_Gem_yoyo(request):
 
 token_generator = PasswordResetTokenGenerator()
 def ForgotPassword_yoyo(request):
-    # If user is already logged in, redirect to home page
-    if request.session.get("user_id"):
-        return redirect("home")
-    
+    return render(request,"ForgotPassword.html")
+
+def ForgotPassword_yoyo(request):
     if request.method == "POST":
         email = request.POST.get("email")
         try:
