@@ -725,33 +725,63 @@
     <!---------------------------------------------->
 
     
-    <script>
-        const toggleBtn = document.getElementById("toggleAccountsBtn");
-        const accountList = document.getElementById("accountList");
-        const toggleText = document.getElementById("toggleText");
-        const iconExpand = document.getElementById("iconExpand");
-
-        toggleBtn.addEventListener("click", () => {
-            const isVisible = !accountList.classList.contains("hidden");
-            accountList.classList.toggle("hidden");
-
-            // Update text and icon
-            toggleText.textContent = isVisible ? "Show more accounts" : "Hide more accounts";
-            iconExpand.classList.toggle("rotate-180", !isVisible);
-
-            // Toggle bottom radius of the button
-            if (!isVisible) {
-                toggleBtn.classList.remove("rounded-b-3xl");
-            } else {
-                toggleBtn.classList.add("rounded-b-3xl");
-            }
-        });
-
-    </script>
 
     <script>
         // Pass saved_infos data to JavaScript
         window.savedInfos = {{ saved_infos|safe }};
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Profile dropdown functionality
+            const profileBtn = document.getElementById("profile-button");
+            const dropdown = document.getElementById("profile-dropdown");
+            
+            if (profileBtn && dropdown) {
+                // Remove any existing event listeners by cloning the element
+                const newProfileBtn = profileBtn.cloneNode(true);
+                profileBtn.parentNode.replaceChild(newProfileBtn, profileBtn);
+                
+                newProfileBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle("hidden");
+                });
+                
+                // Click outside to close dropdown
+                document.addEventListener("click", (e) => {
+                    if (!newProfileBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.classList.add("hidden");
+                    }
+                });
+            }
+        
+            // Account toggle functionality - Remove existing listeners and add new ones
+            const toggleBtn = document.getElementById("toggleAccountsBtn");
+            const accountList = document.getElementById("accountList");
+            const toggleText = document.getElementById("toggleText");
+            const iconExpand = document.getElementById("iconExpand");
+            
+            if (toggleBtn && accountList && toggleText && iconExpand) {
+                // Remove any existing event listeners by cloning the element
+                const newToggleBtn = toggleBtn.cloneNode(true);
+                toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+                
+                newToggleBtn.addEventListener("click", () => {
+                    const isVisible = !accountList.classList.contains("hidden");
+                    accountList.classList.toggle("hidden");
+                    
+                    // Update text and icon
+                    toggleText.textContent = isVisible ? "Show more accounts" : "Show fewer accounts";
+                    iconExpand.classList.toggle("rotate-180", !isVisible);
+                    
+                    // Toggle bottom radius of the button
+                    if (!isVisible) {
+                        newToggleBtn.classList.remove("rounded-b-3xl");
+                    } else {
+                        newToggleBtn.classList.add("rounded-b-3xl");
+                    }
+                });
+            }
+        });
     </script>
     <script src="{% static "JS/SavedInfo.js" %}"></script>
     <script src="{% static "JS/index.js" %}"></script>

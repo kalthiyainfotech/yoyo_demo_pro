@@ -236,10 +236,10 @@ function handleActionBtn(index) {
         portal.style.display = 'none';
         portal.innerHTML = `
             <ul style="padding:8px 0; margin:0; list-style:none; background:#1B1C1D;">
-                <li id="portal-edit" class="tooltip-custom flex items-center px-3 py-2 cursor-pointer text-md" style="background:#1B1C1D; color: var(--text-main);">
+                <li id="portal-edit" class="flex items-center px-3 py-2 cursor-pointer text-md" style="background:#1B1C1D; color: var(--text-main);">
                     <span class="material-symbols-outlined text-2xl mr-3">edit</span> Edit
                 </li>
-                <li id="portal-delete" class="tooltip-custom flex items-center px-3 py-2 cursor-pointer text-md" style="background:#1B1C1D; color: var(--text-main);">
+                <li id="portal-delete" class="flex items-center px-3 py-2 cursor-pointer text-md" style="background:#1B1C1D; color: var(--text-main);">
                     <span class="material-symbols-outlined text-2xl mr-3">delete</span> Delete
                 </li>
             </ul>
